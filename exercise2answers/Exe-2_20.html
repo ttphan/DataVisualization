@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Answer 2.20</title>
+    <meta charset="utf-8">
+	<!--
+    <link href=bootstrap-3.1.1-dist/css/bootstrap.css rel=stylesheet media="screen">
+    <link rel=stylesheet href="codemirror-4.7/lib/codemirror.css">
+    <link rel=stylesheet href="codemirror-4.7/theme/eclipse.css">
+    <link rel=stylesheet href="Inlet-master/inlet.css" media="screen" >
+    <!--<link rel=stylesheet href="Inlet-master/lib/index.css" media="screen">-->
+
+</head>
+<style>
+    #editor
+    {
+        font: 10px sans-serif;
+    }
+
+    #code
+    {
+        font: 10px sans-serif;
+    }
+
+    .axis text {
+        font: 10px sans-serif;
+    }
+
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: #000;
+    }
+
+
+
+
+
+
+</style>
+
+
+<div class="row">
+    <div class="col-md-4" id ="svgArea"></div>
+    <!--<div class="col-md-4" id ="editor"></div>-->
+    <div class="col-md-4" id ="code"></div>
+</div>
+
+<div class="row">
+
+    <div class="col-md-4" id ="editor"></div>
+
+</div>
+
+
+
+<!--<div id='editor'></div>-->
+
+
+<body>
+
+<script src=D3/d3.min.js></script><!--
+<script src=jquery-2.1.0/jquery-2.1.0.min.js></script>
+<script src=bootstrap-3.1.1-dist/js/bootstrap.min.js></script>
+<script src=codemirror-4.7/lib/codemirror.js></script>
+<script src=codemirror-4.7/mode/javascript/javascript.js></script>
+
+<script src=Inlet-master/inlet.js></script>
+-->
+
+
+
+
+
+
+
+
+
+
+
+<script>
+    // Creates your margin and size of your canvas
+    var margin = {top: 20, right: 50, bottom: 40, left: 40};
+    var width = 500,
+            height = 250;
+
+
+    // In order for the margins to work we need to append a "g" (graphic) element to our svg
+    var svg = d3.select("#svgArea").append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    // Check the API of d3 if you want to have a deeper understanding on how scales work.
+    // This variables are global, so if you are interested go to console and type:
+    // x.range()
+    // y.range()
+    // See that there is no domain defined.....yet!
+    var x = d3.scale.linear().range([0, width - margin.right]);
+    var y = d3.scale.linear().range([height - margin.bottom, 0]);
+
+
+    // D3 is awesome, it already has SVG's that help you create axis
+    var xAxis = d3.svg.axis()
+            .scale(x)
+            .orient("bottom");
+
+    var yAxis = d3.svg.axis()
+            .scale(y)
+            .orient("left")
+            .ticks(10);
+
+    // Remember the modules in the presentation? This is where the fun begins
+    // 1. Create a global variable and check in console how the data variable returns the information from "download-1"
+
+    d3.tsv("flowers.tsv", function(error, data){
+        data.forEach(function(d){
+            d.sepalLength = +d.sepalLength;
+            d.sepalWidth = +d.sepalWidth;
+        });
+
+        data2 = data;
+		//Answer question 20: This is just an example of how you can experiment with color. In the code below, we use the sepalWidth feature to base our color on. The colorscale is based on three base colors: black, orange and red and interpolates between these based on the sepalWidth.
+        var domainColor = d3.extent(data, function(d){return d.sepalWidth});
+        domainColor = [domainColor[0], (domainColor[0] + domainColor[1])/2, domainColor[1]];
+
+        var color = d3.scale.linear().domain(domainColor).range(["black","orange", "red"]);
+
+        x.domain(d3.extent(data, function(d){return d.sepalLength;})).nice();
+        y.domain(d3.extent(data, function(d){return d.sepalWidth;})).nice();
+
+        radius = 4;
+        svg.append("g")
+                .selectAll("circle")
+                .data(data)
+                .enter()
+                .append("circle")
+                .attr("cx", function(d){ return x(d.sepalLength)})
+                .attr("cy", function(d){ return y(d.sepalWidth)})
+                .attr("r", radius)
+                .style("fill", function(d){ return color(d.sepalWidth);})
+                .style("stroke", "black")
+                .style("stroke-width", 1);
+
+        svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + (height - margin.bottom) + ")")
+                .call(xAxis);
+
+        svg.append("g")
+                .attr("class", "y axis")
+                .call(yAxis);
+
+
+
+
+
+        // Remember our hardcoded data? Go to the API and check how d3.range and d3.map works
+        // 2. Check the radius variable in the console, Does it change when you refresh the webpage? why?
+        // 3. Take a look at the "cx", "cy" and "r" attributes. Take 2-3 minutes to analyze how they are retrieving the
+        //    data. (remember, console is your best friend) -Hint: console.log is an awesome feature for debugging
+
+        // Answer question 3: the domain x and y are defined by calculating the min/max of our data. d3.extent returns an array
+        // of 2 elements where the first one is the minimum value and the last one is the maximum value
+        // Because radius is a static variable that we created ourselves we need to loop on each element of it. That is why function(d,i)
+        // is used. The variable i is the index that visits each element of radius.
+
+        // 4. Remember that the domain was not defined? Why are we defining it now?
+        // R. We are defining it now because we did not know the content of our data before we read the csv file. Once this data is
+        //    being read we can use it to define our range
+
+        // 5. take a look at d3.extent in the API, why is it so useful
+        // R. d3.extent returns the max and min value in an array of length 2
+        // 6. Define the domain with d3.max and d3.min for both "x" and "y"
+
+
+
+        // 7. Can you use the same data and use "rects" instead of circles?
+
+
+        // 8. If you can, do it, if not...create your own csv file and add any information you may require to complete
+        //    the task.
+        // R. You do not need to add anything just check the properties of a svg rectangle
+
+        // 9. Take a look at the "flowers.tsv" file. What is the difference between tsv and csv?
+        // R. CSV is comma separated values, that means that each value is separated with a ",". TSV is tabular separated
+        // values. Each value is separated with "TAB"
+
+        // 10. TSV works exactly the same as CSV. Create a new html file, so you can use this one as a guide if you have trouble
+        // and check how this data is being parsed in console with a global variable
+        //
+        // 11. Now you see that there are more that one dimension on each element of the array.
+        // 12. Choose two that you may like and display them in a scatter plot manner.
+        // R. Check the code
+
+        // 13. You should have a visualization with 150 circles.
+        // R. Check the code
+
+        // 14. Remember the global variable you just created? there is a key called "species"
+        // 15. How can you identify these species in your scatterplot if you want all of your elements to remain being circles?
+        // R. By color
+        // 16. take a look at this line: var color = d3.scale.ordinal().range(["red", "yellow", "green"]);
+        // 17. If your color variable is a global variable, play with it in console by doing the following:
+        //      color(1), color('sergio'), color('yourname"), color(100000), color('10')
+        // R. It repeats after the green value has been assigned to a string or integer.
+        // 18. Explain the behavior of this variable.
+        // R. It repeats after the green value has been assigned to a string or integer.
+        // 19. Change your circles so that the "red" color represents one species, "yellow" the other one, and "green" the last one
+        //     - Hint: try it only in the "style('fill', ...) line of your code
+        // 20. Apply different color parameters by editing your color variable
+        // 21.
+        // 21. Make the circles change from black to orange to red from min to maximum value
+        // 22. Take a look at: 'var color = d3.scale.category10();' Can you use it to apply colors to your circles? Why?
+        // 23. Why are these colors defined like that? do you like them? Why/Why Not?
+        // 24. Check colorbrewer on the internet and get a deeper understanding on why colors are so important.
+        // YOU ARE DONE......FOR NOW......SEE YOU NEXT WEEK :)
+
+
+
+
+
+
+
+        // You do not need to see below this line
+        svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + (height - margin.bottom) + ")")
+                .call(xAxis);
+
+        svg.append("g")
+                .attr("class", "y axis")
+                .call(yAxis);
+
+    });
+
+
+
+
+
+
+</script>
+
+
+
+</body>
+</html>
