@@ -6,16 +6,6 @@ public class SplitFile {
 	
 	private static String header = "";
 	private static int lineCount = 0;
-	private static String csvFile = "../data/master-zones.csv";
-
-	public static void main(String[] args) {
-		countLines(csvFile);
-		
-		int fileSize = (int) Math.ceil(lineCount / 25.0);
-
-		splitFile(csvFile, fileSize);
-		
-	}
 	
 	public static void countLines(String csvFile) {
 		BufferedReader reader = null;
@@ -42,7 +32,9 @@ public class SplitFile {
 		}
 	}
 	
-	public static void splitFile(String csvFile, int fileSize) {
+	public static void splitFile(String csvFile, double parts) {
+		int fileSize = (int) Math.ceil(lineCount / parts);
+		
 		BufferedReader reader = null;
 		BufferedWriter writer = null;
 		String line = "";
