@@ -35,6 +35,11 @@ public class ExtractMatch {
 				}
 			}
 			
+			reader.close();
+			
+			writer.flush();
+			writer.close();
+			
 			found = false;
 			targetFile = new File("deliverables/match-" + matchId + "-zones.csv");		
 			reader = new BufferedReader(new FileReader("../data/master-zones.csv"));
