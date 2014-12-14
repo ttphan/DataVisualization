@@ -113,6 +113,54 @@ svg.append("svg:image")
 
 //------------------------------------------------------------//
 
+var winSmallDDArray = [];
+var loseSmallDDArray = [];
+
+var smallDDArray = [];
+
+d3.csv("data/master-distance.csv",function(error, data) {
+    data.forEach(function(d) {
+        d.match = +d.match;
+        d.team  = d.team;
+        d.tsync = +d.tsync;
+        d.DD    = +d.DD;
+        d.Tier  = d.Tier;
+        d.WinLose = d.WinLose;
+        if(d.match == 569649581){
+            findSmallDdPerTeam(d);
+        }
+        smallDDIntersect(winSmallDDArray, loseSmallDDArray);
+        console.log(smallDDArray);
+    });
+
+    var color = d3.scale.category10();
+    
+    //Just a prototype, trying this for one specific match
+    function findSmallDdPerTeam(d) {
+        if(d.WinLose == "Win") {
+            if(d.tsync > 100 && d.DD <= 40) {
+                winSmallDDArray.push(d.tsync);
+            }
+        }
+        if(d.WinLose == "Lose") {
+            if(d.tsync > 100 && d.DD <= 40) {
+                loseSmallDDArray.push(d.tsync);
+            }
+        }
+    }
+
+    function smallDDIntersect(arr1, arr2) {
+        for(var i = 0; i < arr1.length; i++) {
+            for(var j = 0; j < arr2.length; j++) {
+                if(arr1[i] == arr2[j]) {
+                    smallDDArray.push(arr1[i]);
+                }
+            }
+        }
+    }
+
+});
+
 	// We read the data
 d3.csv("data/Dota-Labels.csv",function(error, data) {
     data.forEach(function(d) {
@@ -122,10 +170,10 @@ d3.csv("data/Dota-Labels.csv",function(error, data) {
 		d.LabelValue = +d.LabelValue;
     });
 
-var color = d3.scale.category20();
+    var color = d3.scale.category20();
 
 
-circle = svg.append("g")
+    circle = svg.append("g")
         .selectAll("circle")
         .data(data)
         .enter()
@@ -134,12 +182,17 @@ circle = svg.append("g")
         .attr("cy", function(d){return (((124 - d.y) * 6) + 3) + 15})
         .attr("r", 3)
         .attr("class","gridCircle")
-        .style(
-                "fill", function(d) { return color(d.LabelValue); }
-              );
+        .style("fill", 
+                function(d) { 
+                                if(d.LabelValue != 17 && d.LabelValue != 18){
+                                    return color(d.LabelValue); 
+                                }
+                            }
+        );
 
 
 });
+
 
 
 
