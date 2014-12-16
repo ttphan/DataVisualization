@@ -304,6 +304,9 @@ function getMatch(matchId) {
 
     var smallDDArray = [];
 
+    var teamfightDD = 40;
+    var earlyGame = 100;
+
     d3.csv("scripts/deliverables/match-" + matchId + "-distance.csv",function(error, data) {
         data.forEach(function(d) {
             d.match = +d.match;
@@ -323,12 +326,12 @@ function getMatch(matchId) {
         //Just a prototype, trying this for one specific match
         function findSmallDdPerTeam(d) {
             if(d.WinLose == "Win") {
-                if(d.tsync > 100 && d.DD <= 40) {  //100?, 40?
+                if(d.tsync > earlyGame && d.DD <= teamfightDD) {  //100?, 40?
                     winSmallDDArray.push(d.tsync);
                 }
             }
             if(d.WinLose == "Lose") {
-                if(d.tsync > 100 && d.DD <= 40) {  //100?, 40?
+                if(d.tsync > earlyGame && d.DD <= teamfightDD) {  //100?, 40?
                     loseSmallDDArray.push(d.tsync);
                 }
             }
