@@ -3,16 +3,15 @@
 <head>
     <title>Exercise-3</title>
     <meta charset="utf-8">
-    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
     <link href=bootstrap-3.1.1-dist/css/bootstrap.css rel=stylesheet media="screen">
 </head>
 
-<!-- We define the css style information for the path. You can also have this information in a .css file -->
-<!-- colors can be given as classes red - blue, but also as consecutive hexadecimal (0-f) numbers in the form of RGB (either 3 or 6 digits) so
-For example: #00ff00 (green) , #f00 (red), #ff0 (yellow) #fff (white) #ccf (blue less saturated) etc -->
-<!-- cursor allows you to define the form of the cursor when you are on top of the object -->
 
 <style>
+    body {
+        background-color: #2E2D34;
+    }
+
     svg {
         font: 10px sans-serif;
     }
@@ -36,44 +35,6 @@ For example: #00ff00 (green) , #f00 (red), #ff0 (yellow) #fff (white) #ccf (blue
         padding-top: 50px;
     }
 
-    /*.background path {
-        fill: none;
-        stroke: #ccc;
-        stroke-opacity: .4;
-        shape-rendering: crispEdges;
-    }
-
-    .foreground path {
-        fill: none;
-        stroke: steelblue;
-        stroke-width:1;
-        stroke-opacity: .7;
-    }
-
-    .brush .extent {
-        fill-opacity: .4;
-        shape-rendering: crispEdges;
-    }
-
-    .axis line,
-    .axis path {
-        fill: none;
-        stroke: #393b79;
-        shape-rendering: crispEdges;
-    }
-
-    .axis text {
-        text-shadow: 0 2px 0 #fff;
-        cursor: move;
-    }
-
-    .outer {
-        fill:none;
-        stroke: #000;
-    }
-*/
-
-
 
 </style>
 
@@ -95,30 +56,14 @@ var margin = {top: 10, right: 10, bottom: 10, left: 10},
         width = 768,
         height = 768;
 
-var x = {},
-        y = {},
-        dragging = {};
 
-
-
-var line = d3.svg.line(),
-        axis = d3.svg.axis().orient("left"),
-        background,
-        foreground;
-
-var dimensions;
-
-
-// Defines your svg element and also as a "g" (graphic) element that you can translate for your visualization
-var svg = d3.select("#svgArea").append("svg")// where are you placing your graphic (body) (div)
+var svg = d3.select("#svgArea").append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g");
-        //.attr("transform", "translate(" + 0 + "," + 0 + ")"); //
 
 
 //!!!!!!!!!IMAGE HERE!!!!!!!!!!
-// We draw the outer rectangle based on the outer class
 svg.append("svg:image")
         .attr("x", margin.left)
         .attr("y", margin.top)
@@ -127,11 +72,61 @@ svg.append("svg:image")
         .attr("xlink:href","HighResMap.jpg")
 
 
+var dropDown = d3.select("#dropDown").append("select")
+                    .attr("name", "match-list");
 
+dropDown.on("change", menuChanged);
+
+dropDown.append("option")
+    .text("<SELECT A MATCH>");
+
+d3.csv("scripts/deliverables/matches.csv",function(error, data) {
+    data.forEach(function(d) {
+        d.match = +d.match;
+    });
+
+    var options = dropDown.selectAll("option")
+                    .data(data)
+                    .enter()
+                    .append("option");
+
+    options.text(function (d) { return "Match id: " + d.match; })
+       .attr("value", function (d) { return d.match; });        
+});
+
+//Inkleuren van de kaart.
+d3.csv("data/Dota-Labels.csv",function(error, data) {
+    data.forEach(function(d) {
+        d.x = +d.x;
+        d.y = +d.y;
+        d.SectionLabel = d.SectionLabel;
+        d.LabelValue = +d.LabelValue;
+    });
+
+    var color = d3.scale.category20();
+
+
+    circle = svg.append("g")
+        .selectAll("circle")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("cx", function(d){return ((d.x * 6) + 3) + 15})
+        .attr("cy", function(d){return (((124 - d.y) * 6) + 3) + 15})
+        .attr("r", 3)
+        .attr("class","gridCircle")
+        .style("fill", 
+                function(d) { 
+                if(d.LabelValue != 17 && d.LabelValue != 18){
+                    return color(d.LabelValue); 
+                }
+            }
+        );
+});
 
 
 /**
- * Dit deel berekent de gemiddelde afstand van beide teams en de onderlinge afstand tussen teams.
+ * Functions
  */
 
 function eucl(x1, y1, x2, y2) {
@@ -164,8 +159,6 @@ function avgArray(arr) {
     return newArr;
 }
 
-//var interTeamDistArr = euclArray(avgPosListWinX, avgPosListWinY, avgPosListLoseX, avgPosListLoseY);
-
 function euclArray(arr1, arr2, arr3, arr4) {
     var euclArr = [];
     for(var i = 0; i < arr1.length; i++) {
@@ -177,32 +170,11 @@ function euclArray(arr1, arr2, arr3, arr4) {
 function menuChanged() {
     var selectedValue = d3.event.target.value;
     
-    if (!isNaN(selectedValue && selectedValue > 0)) {
+    if (!isNaN(selectedValue) && selectedValue > 0) {
+        console.log(selectedValue);
         getMatch(selectedValue);
     }
 }
-
-var dropDown = d3.select("#dropDown").append("select")
-                    .attr("name", "match-list");
-
-dropDown.on("change", menuChanged);
-
-
-
-d3.csv("scripts/deliverables/matches.csv",function(error, data) {
-    data.forEach(function(d) {
-        d.match = +d.match;
-    });
-
-    var options = dropDown.selectAll("option")
-                    .data(data)
-                    .enter()
-                    .append("option");
-
-    options.text(function (d) { return "Match id: " + d.match; })
-       .attr("value", function (d) { return d.match; });        
-});
-
 
 function getMatch(matchId) {
     var matchTime;
@@ -236,7 +208,6 @@ function getMatch(matchId) {
             d.tper = +d.tper;
             d.tier = d.tier;
             d.zone = d.zone;
-            //createPlayerLists(d);
 
             if (matchTime < d.tsync + 1) {
                 matchTime = d.tsync + 1;
@@ -323,7 +294,6 @@ function getMatch(matchId) {
 
         var color = d3.scale.category10();
         
-        //Just a prototype, trying this for one specific match
         function findSmallDdPerTeam(d) {
             if(d.WinLose == "Win") {
                 if(d.tsync > earlyGame && d.DD <= teamfightDD) {  //100?, 40?
@@ -350,180 +320,6 @@ function getMatch(matchId) {
     });
 }
 
-
-//Inkleuren van de kaart.
-	// We read the data
-d3.csv("data/Dota-Labels.csv",function(error, data) {
-    data.forEach(function(d) {
-		d.x	= +d.x;
-		d.y	= +d.y;
-        d.SectionLabel = d.SectionLabel;
-		d.LabelValue = +d.LabelValue;
-    });
-
-    var color = d3.scale.category20();
-
-
-    circle = svg.append("g")
-        .selectAll("circle")
-        .data(data)
-        .enter()
-        .append("circle")
-        .attr("cx", function(d){return ((d.x * 6) + 3) + 15})
-        .attr("cy", function(d){return (((124 - d.y) * 6) + 3) + 15})
-        .attr("r", 3)
-        .attr("class","gridCircle")
-        .style("fill", 
-                function(d) { 
-                                if(d.LabelValue != 17 && d.LabelValue != 18){
-                                    return color(d.LabelValue); 
-                                }
-                            }
-        );
-
-
-});
-
-
-
-
-/*
-
-
-		// we create an array with the labels of the dimensions of our data. We will not use the species
-		dimensions = d3.keys(data[0]);
-		//.filter(function(d){return d !="species" });
-
-		// we create the scale distribution for ordinal data
-		x= d3.scale.ordinal().rangePoints([0, width], 1)
-			.domain(dimensions);
-
-		// y contains the scaling factors for all the dimensions
-
-
-        for (i = 0; i < dimensions.length-1; i++) {
-            y[dimensions[i]]  = d3.scale.linear()
-                       .domain(d3.extent(data, function(d){return d[dimensions[i]]})).nice()
-                       .range([height,0]);
-                 }
-
-/*      The loop above is equivalent to
-
-        y.sepalLength  = d3.scale.linear()
-                       .domain(d3.extent(data, function(d){return d.sepalLength})).nice()
-                       .range([height,0]);
-        y.sepalWidth  = d3.scale.linear()
-					   .domain(d3.extent(data, function(d){return d.sepalWidth})).nice()
-    				   .range([height,0]);
-
-    	y.petalLength = d3.scale.linear()
-					   .domain(d3.extent(data, function(d){return d.petalLength})).nice()
-    				   .range([height,0]);
-
-	   	y.petalWidth  = d3.scale.linear()
-					   .domain(d3.extent(data, function(d){return d.petalWidth})).nice()
-    				   .range([height,0]);
-*/
-		
-		y.species = d3.scale.ordinal()
-					.domain(["setosa","versicolor","virginica"])
-					.rangePoints([height,0], 1);
-    
-    // If our lines are not selected (background), change their color to something "less" important
-    /*background = svg.append("g")
-            .attr("class", "background")
-            .selectAll("path")
-            .data(data)
-            .enter()
-            .append("path")
-            .attr("d", path); // http://www.w3schools.com/svg/svg_path.asp (svg's are complex when they want to be)
-    
-
-
-
-    // If lines are selected change their color accordingly to their species color
-
-    // Define the color scale - see scales https://github.com/mbostock/d3/wiki/Ordinal-Scales 
-    var color = d3.scale.category10();
-
-    foreground = svg.append("g")
-            .attr("class", "foreground")
-            .selectAll("path")
-            .data(data)
-            .enter()
-            .append("path")
-            .attr("d", path)
-            .style("stroke", function(d){
-                return color(d.species);});
-            
-
-
-     // create a "g" element that you can translate according to the number of dimensions your data has
-    var g = svg.selectAll(".dimension")
-            .data(dimensions)
-            .enter().append("g")
-            .attr("class", "dimension")
-            .attr("transform", function(d) { return "translate(" + x(d) + ")"; })
-
-    // Add an axis and title.
-    g.append("g")
-            .attr("class", "axis")
-            .each(function(d) {
-                d3.select(this).call(axis.scale(y[d])); })
-            .append("text")
-            .attr("text-anchor", "middle")
-            .attr("y", -8)
-            .text(String);
-
-    // Add and store a brush for each axis.
-    // d3.select(this) decides which axis you are working on and assigns an individual brush that you can manipulate
-    // go to the function BRUSH to see how the selection/deselection works
-    g.append("g")
-            .attr("class", "brush")
-            .each(function(d) {
-                d3.select(this).call(y[d].brush = d3.svg.brush()
-                        .y(y[d])
-                        .on("brush", brush));
-            })
-            .selectAll("rect")
-            .attr("x", -8)
-            .attr("width", 16)
-            .style("fill","#cc0");
-
-});
-
-
-function position(d) {
-    var v = dragging[d];
-    return v == null ? x(d) : v;
-}
-
-// Returns the path for a given data point.
-function path(d) {
-    return line(dimensions.map(function(p) { return [position(p), y[p](d[p])]; }));
-}
-
-// Handles a brush event, toggling the display of foreground lines.
-function brush() {
-
-    // Actives return the axis you are applying a brush to!
-    // extents return the upper and lower limit of your selection
-    var actives = dimensions.filter(function(p) { return !y[p].brush.empty(); }),
-            extents = actives.map(function(p) { return y[p].brush.extent(); });
-
-
-    foreground.style("display", function(d) {
-            return actives.every(function(p, i) {
-                var point = (y[p].ticks)?d[p]:y[p](d[p]);
-                return extents[i][0] <= point && point <= extents[i][1];
-            }) ? null : "none";
-        });
-}
-*/
-
 </script>
-
-
-
 </body>
 </html>
