@@ -18,7 +18,7 @@ For example: #00ff00 (green) , #f00 (red), #ff0 (yellow) #fff (white) #ccf (blue
     }
 
     .gridCircle {
-        opacity:0.5;
+        opacity:0;
     }
 
     #svgArea {
@@ -264,19 +264,6 @@ function getMatch(matchId) {
                 posListLoseY[d.tsync] += d.y;
             }
 
-
-
-            if(d.tsync == 546) {
-                //console.log(data[546].x);
-
-                if(d.won == 1) {
-                    xPosWin += d.x;
-                    yPosWin += d.y;
-                }else{
-                    xPosLose += d.x;
-                    yPosLose += d.y;
-                }
-            }
         });
 
         var avgPosListWinX = avgArray(posListWinX);
@@ -285,27 +272,11 @@ function getMatch(matchId) {
         var avgPosListLoseX = avgArray(posListLoseX);
         var avgPosListLoseY = avgArray(posListLoseY);
 
+        //Lijst met alle afstanden tussen teams op tijdstippen waarop DD kleiner is dan een bepaalde waarde.
         var interTeamDistArr = euclArray(avgPosListWinX, avgPosListWinY, avgPosListLoseX, 
             avgPosListLoseY);
 
         console.log(interTeamDistArr);
-
-        var xPosWinAvg = xPosWin / 5;
-        var yPosWinAvg = yPosWin / 5;
-        var xPosLoseAvg = xPosLose / 5;
-        var yPosLoseAvg = yPosLose / 5;
-        console.log("xWin: " + xPosWinAvg + ", yWin: " + yPosWinAvg);
-        console.log("xLose: " + xPosLoseAvg + ", yLose: " + yPosLoseAvg);
-        console.log("Eucl. dist: " + eucl(xPosWinAvg, yPosWinAvg, xPosLoseAvg, yPosLoseAvg));
-
-        //Hier lijsten maken met average positions per team per tijdstip waarop de DD van beide teams laag is.
-        /*function averagePosWin(tsync) {
-
-        }
-
-        function averagePosLose(tsync) {
-
-        }*/
 
         /**
         * Hier functie om players op te halen, weet niet of dit nog nodig is, hoorde bij een eerste aanpak van gisteravond.
