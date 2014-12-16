@@ -156,7 +156,7 @@ function euclArray(arr1, arr2, arr3, arr4) {
     return euclArr;
 }
 
-var matchTime = 1552;
+var matchTime;
 
 var winTeamPlayers = [];
 var loseTeamPlayers = [];
@@ -167,13 +167,14 @@ var yPosWin = 0;
 var xPosLose = 0;
 var yPosLose = 0;
 
-var posListWinX = makeArrayOf(0, matchTime);
-var posListWinY = makeArrayOf(0, matchTime);
+var posListWinX = [];
+var posListWinY = [];
 
-var posListLoseX = makeArrayOf(0, matchTime);
-var posListLoseY = makeArrayOf(0, matchTime);
+var posListLoseX = [];
+var posListLoseY = [];
 
 d3.csv("scripts/deliverables/match-569649581-zones.csv", function(error, data) {
+    matchTime = 1;
     data.forEach(function(d) {
         d.t = +d.t;
         d.x = +d.x;
@@ -188,10 +189,28 @@ d3.csv("scripts/deliverables/match-569649581-zones.csv", function(error, data) {
         d.tier = d.tier;
         d.zone = d.zone;
         //createPlayerLists(d);
+
+        if (matchTime < d.tsync + 1) {
+            matchTime = d.tsync + 1;
+        }
         if(smallDDArray.indexOf(d.tsync)!=-1 && d.won==1){
+            if (posListWinX[d.tsync] == null) {
+                posListWinX[d.tsync] = 0;
+            }
+            if (posListWinY[d.tsync] == null) {
+                posListWinY[d.tsync] = 0;
+            }
+
             posListWinX[d.tsync] += d.x;
             posListWinY[d.tsync] += d.y;
         }else if(smallDDArray.indexOf(d.tsync)!=-1 && d.won==0) {
+            if (posListLoseX[d.tsync] == null) {
+                posListLoseX[d.tsync] = 0;
+            }
+            if (posListLoseY[d.tsync] == null) {
+                posListLoseY[d.tsync] = 0;
+            }
+
             posListLoseX[d.tsync] += d.x;
             posListLoseY[d.tsync] += d.y;
         }
