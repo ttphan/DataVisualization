@@ -114,6 +114,10 @@ svg.append("svg:image")
 
 //------------------------------------------------------------//
 
+
+/**
+ * Dit deel berekent de momenten waarop de DDs kleiner zijn dan een bepaald getal.
+*/
 var winSmallDDArray = [];
 var loseSmallDDArray = [];
 
@@ -139,12 +143,12 @@ d3.csv("data/master-distance.csv",function(error, data) {
     //Just a prototype, trying this for one specific match
     function findSmallDdPerTeam(d) {
         if(d.WinLose == "Win") {
-            if(d.tsync > 100 && d.DD <= 40) {
+            if(d.tsync > 100 && d.DD <= 40) {  //100?, 40?
                 winSmallDDArray.push(d.tsync);
             }
         }
         if(d.WinLose == "Lose") {
-            if(d.tsync > 100 && d.DD <= 40) {
+            if(d.tsync > 100 && d.DD <= 40) {  //100?, 40?
                 loseSmallDDArray.push(d.tsync);
             }
         }
@@ -163,6 +167,88 @@ d3.csv("data/master-distance.csv",function(error, data) {
 
 });
 
+
+/**
+ * Dit deel berekent de gemiddelde afstand van beide teams en de onderlinge afstand tussen teams.
+ */
+
+var winTeamPlayers = [];
+var loseTeamPlayers = [];
+
+var xPosWin = 0;
+var yPosWin = 0;
+var xPosLose = 0;
+var yPosLose = 0;
+
+d3.csv("scripts/deliverables/match-569649581-zones.csv", function(error, data) {
+    data.forEach(function(d) {
+        d.t = +d.t;
+        d.x = +d.x;
+        d.y = +d.y;
+        d.match = +d.match;
+        d.team = d.team;
+        d.player = d.player;
+        d.won = +d.won;
+        d.tstd = +d.tstd;
+        d.tsync = +d.tsync;
+        d.tper = +d.tper;
+        d.tier = d.tier;
+        d.zone = d.zone;
+        //createPlayerLists(d);
+        if(d.tsync == 546) {
+            //console.log(data[546].x);
+
+            if(d.won == 1) {
+                xPosWin += d.x;
+                yPosWin += d.y;
+            }else{
+                xPosLose += d.x;
+                yPosLose += d.y;
+            }
+        }
+    });
+
+    var xPosWinAvg = xPosWin / 5;
+    var yPosWinAvg = yPosWin / 5;
+    var xPosLoseAvg = xPosLose / 5;
+    var yPosLoseAvg = yPosLose / 5;
+    console.log("xWin: " + xPosWinAvg + ", yWin: " + yPosWinAvg);
+    console.log("xLose: " + xPosLoseAvg + ", yLose: " + yPosLoseAvg);
+    console.log("Eucl. dist: " + eucl(xPosWinAvg, yPosWinAvg, xPosLoseAvg, yPosLoseAvg));
+
+    function eucl(x1, y1, x2, y2) {
+        dx = Math.abs(x1-x2);
+        dy = Math.abs(y1-y2);
+        distance = Math.sqrt((dx*dx) + (dy*dy));
+        return(distance);
+    }
+
+    //Hier lijsten maken met average positions per team per tijdstip waarop de DD van beide teams laag is.
+    /*function averagePosWin(tsync) {
+
+    }
+
+    function averagePosLose(tsync) {
+
+    }*/
+
+    /**
+    * Hier functie om players op te halen, weet niet of dit nog nodig is, hoorde bij een eerste aanpak van gisteravond.
+    */
+    console.log("winning team:" + winTeamPlayers);
+    console.log("losing team:" + loseTeamPlayers);
+
+    function createPlayerLists(d) {
+            if(d.won == 1 && (winTeamPlayers.indexOf(d.player) == -1)) { //
+                winTeamPlayers.push(d.player);
+            } else if(d.won == 0 && (loseTeamPlayers.indexOf(d.player) == -1)){ //
+                loseTeamPlayers.push(d.player);
+            }
+    }
+});
+
+
+//Inkleuren van de kaart.
 	// We read the data
 d3.csv("data/Dota-Labels.csv",function(error, data) {
     data.forEach(function(d) {
