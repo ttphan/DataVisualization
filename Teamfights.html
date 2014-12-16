@@ -304,7 +304,8 @@ function getMatch(matchId) {
 
     var smallDDArray = [];
 
-    var teamfightDD = 40;
+    //TODO: bepaal goede waardes voor deze twee vars a.d.h.v. gemiddeld van alle matches of schatting op basis van match replays.
+    var teamfightDD = 40; 
     var earlyGame = 100;
 
     d3.csv("scripts/deliverables/match-" + matchId + "-distance.csv",function(error, data) {
@@ -352,7 +353,6 @@ function getMatch(matchId) {
 
 
 //Inkleuren van de kaart.
-	// We read the data
 d3.csv("data/Dota-Labels.csv",function(error, data) {
     data.forEach(function(d) {
 		d.x	= +d.x;
