@@ -12,7 +12,7 @@ public class Main {
 		
 		saveMatchIds();
 		
-		splitMatches();		
+		//splitMatches();		
 	}
 	
 	private static void splitFiles() {
@@ -39,11 +39,13 @@ public class Main {
 			System.out.println("Extracting match id's...");
 			
 			while ((line = reader.readLine()) != null) {
-				String matchId = line.split(",")[0];
+				String[] split = line.split(",");
+				String matchId = split[0];
+				String tier = split[4];
 				
 				if (!matches.contains(matchId)) {
 					matches.add(matchId);
-					writer.write(matchId);
+					writer.write(matchId + "," + tier);
 					writer.newLine();				
 				}
 			}
