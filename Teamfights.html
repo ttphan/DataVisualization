@@ -81,6 +81,8 @@ dropDown.append("option")
     .text("<SELECT A MATCH>");
 
 d3.csv("scripts/deliverables/matches.csv",function(error, data) {
+    data.unshift(0);
+
     data.forEach(function(d) {
         d.match = +d.match;
     });
@@ -182,16 +184,20 @@ function getMatch(matchId) {
 }
 
 function computeSmallDD(matchId) {
+    var winArray = [];
+    var loseArray = [];
+
     var winSmallDDArray = [];
     var loseSmallDDArray = [];
 
     var smallDDArray = [];
 
-    //TODO: bepaal goede waardes voor deze twee vars a.d.h.v. gemiddeld van alle matches of schatting op basis van match replays.
-    var teamfightDD = 40; 
     var earlyGame = 100;
 
-    d3.csv("scripts/deliverables/match-" + matchId + "-distance.csv",function(error, data) {
+    // Smallest (100 * n)% of the win/loseArray
+    var treshold = 0.3;
+
+    d3.csv("scripts/deliverables/match-" + matchId + "-distance.csv", function(error, data) {
         data.forEach(function(d) {
             d.match = +d.match;
             d.team  = d.team;
@@ -199,26 +205,28 @@ function computeSmallDD(matchId) {
             d.DD    = +d.DD;
             d.Tier  = d.Tier;
             d.WinLose = d.WinLose;
-            findSmallDdPerTeam(d);
+
+            if (d.tsync > earlyGame) {
+                if (d.WinLose == "Win") {
+                    winArray.push([d.tsync, d.DD]);
+                }
+                else {
+                    loseArray.push([d.tsync, d.DD]);
+                }
+            }
             
         });
 
-        smallDDIntersect(winSmallDDArray, loseSmallDDArray);
+        // Sort both arrays by DD and get the first (100*treshold)%.
+        winArray.sort(comparison);
+        loseArray.sort(comparison);
 
-        var color = d3.scale.category10();
-        
-        function findSmallDdPerTeam(d) {
-            if(d.WinLose == "Win") {
-                if(d.tsync > earlyGame && d.DD <= teamfightDD) {  //100?, 40?
-                    winSmallDDArray.push(d.tsync);
-                }
-            }
-            if(d.WinLose == "Lose") {
-                if(d.tsync > earlyGame && d.DD <= teamfightDD) {  //100?, 40?
-                    loseSmallDDArray.push(d.tsync);
-                }
-            }
+        for (var i = 0; i < (winArray.length*treshold); i++) {
+            winSmallDDArray.push(winArray[i][0]);
+            loseSmallDDArray.push(loseArray[i][0]);
         }
+
+        smallDDIntersect(winSmallDDArray, loseSmallDDArray);
 
         function smallDDIntersect(arr1, arr2) {
             for(var i = 0; i < arr1.length; i++) {
@@ -229,6 +237,11 @@ function computeSmallDD(matchId) {
                 }
             }
             console.log(smallDDArray);
+        }
+
+        // Comparison for double arrays
+        function comparison(a, b) {
+            return a[1] - b[1];
         }
     });
 
