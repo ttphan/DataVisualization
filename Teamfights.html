@@ -177,99 +177,11 @@ function menuChanged() {
 }
 
 function getMatch(matchId) {
-    var matchTime;
-    var winTeamPlayers = [];
-    var loseTeamPlayers = [];
+    var smallDDArray = computeSmallDD(matchId);
+    var interTeamDistArr = computeInterTeamDistArr(matchId, smallDDArray);
+}
 
-    var xPosWin = 0;
-    var yPosWin = 0;
-
-    var xPosLose = 0;
-    var yPosLose = 0;
-
-    var posListWinX = [];
-    var posListWinY = [];
-
-    var posListLoseX = [];
-    var posListLoseY = [];
-
-    d3.csv("scripts/deliverables/match-" + matchId + "-zones.csv", function(error, data) {
-        matchTime = 1;
-        data.forEach(function(d) {
-            d.t = +d.t;
-            d.x = +d.x;
-            d.y = +d.y;
-            d.match = +d.match;
-            d.team = d.team;
-            d.player = d.player;
-            d.won = +d.won;
-            d.tstd = +d.tstd;
-            d.tsync = +d.tsync;
-            d.tper = +d.tper;
-            d.tier = d.tier;
-            d.zone = d.zone;
-
-            if (matchTime < d.tsync + 1) {
-                matchTime = d.tsync + 1;
-            }
-
-            if(smallDDArray.indexOf(d.tsync)!=-1 && d.won==1){
-                if (posListWinX[d.tsync] == null) {
-                    posListWinX[d.tsync] = 0;
-                }
-                if (posListWinY[d.tsync] == null) {
-                    posListWinY[d.tsync] = 0;
-                }
-
-                posListWinX[d.tsync] += d.x;
-                posListWinY[d.tsync] += d.y;
-            }else if(smallDDArray.indexOf(d.tsync)!=-1 && d.won==0) {
-                if (posListLoseX[d.tsync] == null) {
-                    posListLoseX[d.tsync] = 0;
-                }
-                if (posListLoseY[d.tsync] == null) {
-                    posListLoseY[d.tsync] = 0;
-                }
-
-                posListLoseX[d.tsync] += d.x;
-                posListLoseY[d.tsync] += d.y;
-            }
-
-        });
-
-        var avgPosListWinX = avgArray(posListWinX);
-        var avgPosListWinY = avgArray(posListWinY);
-
-        var avgPosListLoseX = avgArray(posListLoseX);
-        var avgPosListLoseY = avgArray(posListLoseY);
-
-        //Lijst met alle afstanden tussen teams op tijdstippen waarop DD kleiner is dan een bepaalde waarde.
-        var interTeamDistArr = euclArray(avgPosListWinX, avgPosListWinY, avgPosListLoseX, 
-            avgPosListLoseY);
-
-        console.log(interTeamDistArr);
-
-        /**
-        * Hier functie om players op te halen, weet niet of dit nog nodig is, hoorde bij een eerste aanpak van gisteravond.
-        */
-        console.log("winning team:" + winTeamPlayers);
-        console.log("losing team:" + loseTeamPlayers);
-
-        function createPlayerLists(d) {
-            if(d.won == 1 && (winTeamPlayers.indexOf(d.player) == -1)) { //
-                winTeamPlayers.push(d.player);
-            } else if(d.won == 0 && (loseTeamPlayers.indexOf(d.player) == -1)){ //
-                loseTeamPlayers.push(d.player);
-            }
-        }
-    });
-
-    //------------------------------------------------------------//
-
-
-    /**
-     * Dit deel berekent de momenten waarop de DDs kleiner zijn dan een bepaald getal.
-    */
+function computeSmallDD(matchId) {
     var winSmallDDArray = [];
     var loseSmallDDArray = [];
 
@@ -319,39 +231,110 @@ function getMatch(matchId) {
             console.log(smallDDArray);
         }
     });
+
+    return smallDDArray;
 }
 
-//Inkleuren van de kaart.
-d3.csv("data/Dota-Labels.csv",function(error, data) {
-    data.forEach(function(d) {
-		d.x	= +d.x;
-		d.y	= +d.y;
-        d.SectionLabel = d.SectionLabel;
-		d.LabelValue = +d.LabelValue;
+function computeInterTeamDistArr(matchId, smallDDArray) {
+    var matchTime;
+    var winTeamPlayers = [];
+    var loseTeamPlayers = [];
+
+    var xPosWin = 0;
+    var yPosWin = 0;
+
+    var xPosLose = 0;
+    var yPosLose = 0;
+
+    var posListWinX = [];
+    var posListWinY = [];
+
+    var posListLoseX = [];
+    var posListLoseY = [];
+
+    d3.csv("scripts/deliverables/match-" + matchId + "-zones.csv", function(error, data) {
+        matchTime = 1;
+        data.forEach(function(d) {
+            d.t = +d.t;
+            d.x = +d.x;
+            d.y = +d.y;
+            d.match = +d.match;
+            d.team = d.team;
+            d.player = d.player;
+            d.won = +d.won;
+            d.tstd = +d.tstd;
+            d.tsync = +d.tsync;
+            d.tper = +d.tper;
+            d.tier = d.tier;
+            d.zone = d.zone;
+
+            if (matchTime < d.tsync + 1) {
+                matchTime = d.tsync + 1;
+            }
+
+            
+            if (smallDDArray.indexOf(d.tsync)!=-1){
+                if (d.won==1){
+                    if (posListWinX[d.tsync] == null) {
+                        posListWinX[d.tsync] = 0;
+                    }
+                    if (posListWinY[d.tsync] == null) {
+                        posListWinY[d.tsync] = 0;
+                    }
+
+                    posListWinX[d.tsync] += d.x;
+                    posListWinY[d.tsync] += d.y;
+                }else {
+                    if (posListLoseX[d.tsync] == null) {
+                        posListLoseX[d.tsync] = 0;
+                    }
+                    if (posListLoseY[d.tsync] == null) {
+                        posListLoseY[d.tsync] = 0;
+                    }
+
+                    posListLoseX[d.tsync] += d.x;
+                    posListLoseY[d.tsync] += d.y;
+                }
+            }
+
+        });
+
+        var avgPosListWinX = avgArray(posListWinX);
+        // console.log("avgPosListWinX: ");
+        // console.log(avgPosListWinX);
+        var avgPosListWinY = avgArray(posListWinY);
+        // console.log("avgPosListWinY: ");
+        // console.log(avgPosListWinY);
+      
+        var avgPosListLoseX = avgArray(posListLoseX);
+        // console.log("avgPosListLoseX: ");
+        // console.log(avgPosListLoseX);
+        var avgPosListLoseY = avgArray(posListLoseY);
+        // console.log("avgPosListLoseY: ");
+        // console.log(avgPosListLoseY);
+
+        //Lijst met alle afstanden tussen teams op tijdstippen waarop DD kleiner is dan een bepaalde waarde.
+        var interTeamDistArr = euclArray(avgPosListWinX, avgPosListWinY, avgPosListLoseX, 
+            avgPosListLoseY);
+
+        console.log(interTeamDistArr);
+
+        /**
+        * Hier functie om players op te halen, weet niet of dit nog nodig is, hoorde bij een eerste aanpak van gisteravond.
+        */
+        console.log("winning team:" + winTeamPlayers);
+        console.log("losing team:" + loseTeamPlayers);
+
+        function createPlayerLists(d) {
+            if(d.won == 1 && (winTeamPlayers.indexOf(d.player) == -1)) { //
+                winTeamPlayers.push(d.player);
+            } else if(d.won == 0 && (loseTeamPlayers.indexOf(d.player) == -1)){ //
+                loseTeamPlayers.push(d.player);
+            }
+        }
     });
+}
 
-    var color = d3.scale.category20();
-
-
-    circle = svg.append("g")
-        .selectAll("circle")
-        .data(data)
-        .enter()
-        .append("circle")
-        .attr("cx", function(d){return ((d.x * 6) + 3) + 15})
-        .attr("cy", function(d){return (((124 - d.y) * 6) + 3) + 15})
-        .attr("r", 3)
-        .attr("class","gridCircle")
-        .style("fill", 
-                function(d) { 
-                                if(d.LabelValue != 17 && d.LabelValue != 18){
-                                    return color(d.LabelValue); 
-                                }
-                            }
-        );
-
-
-});
 
 </script>
 </body>
