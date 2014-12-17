@@ -85,6 +85,7 @@ d3.csv("scripts/deliverables/matches.csv",function(error, data) {
 
     data.forEach(function(d) {
         d.match = +d.match;
+        d.Tier = d.Tier;
     });
 
     var options = dropDown.selectAll("option")
@@ -92,7 +93,7 @@ d3.csv("scripts/deliverables/matches.csv",function(error, data) {
                     .enter()
                     .append("option");
 
-    options.text(function (d) { return "Match id: " + d.match; })
+    options.text(function (d) { return "Match id: " + d.match + ", tier: " + d.Tier; })
        .attr("value", function (d) { return d.match; });        
 });
 
