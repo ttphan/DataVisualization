@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.3-1.40.12 (MiKTeX 2.9 64-bit) (preloaded format=pdflatex 2012.12.6)  18 DEC 2014 22:33
+This is pdfTeX, Version 3.1415926-2.3-1.40.12 (MiKTeX 2.9 64-bit) (preloaded format=pdflatex 2012.12.6)  18 DEC 2014 22:45
 entering extended mode
 **DataVisualization_Assignment1_Report.tex
 
@@ -437,17 +437,17 @@ s not changed.
 Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 51.
  ) 
 Here is how much of TeX's memory you used:
- 7728 strings out of 494045
- 115352 string characters out of 3148387
+ 7725 strings out of 494045
+ 115328 string characters out of 3148387
  227677 words of memory out of 3000000
  10867 multiletter control sequences out of 15000+200000
- 16883 words of font info for 73 fonts, out of 3000000 for 9000
+ 16764 words of font info for 71 fonts, out of 3000000 for 9000
  715 hyphenation exceptions out of 8191
- 30i,6n,35p,622b,343s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 30i,6n,35p,693b,343s stack positions out of 5000i,500n,10000p,200000b,50000s
 {C:/Program Files/MiKTeX 2.9/fonts/enc/dvips/fontname/8r.enc}<C:/Program File
 s/MiKTeX 2.9/fonts/type1/urw/times/utmb8a.pfb><C:/Program Files/MiKTeX 2.9/font
 s/type1/urw/times/utmr8a.pfb>
-Output written on DataVisualization_Assignment1_Report.pdf (3 pages, 32361 byte
+Output written on DataVisualization_Assignment1_Report.pdf (3 pages, 32539 byte
 s).
 PDF statistics:
  33 PDF objects out of 1000 (max. 8388607)
