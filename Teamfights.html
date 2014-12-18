@@ -133,8 +133,31 @@ d3.csv("data/Dota-Labels.csv",function(error, data) {
 
 
 /**
- * Functions
+ * Utility Functions
  */
+
+function filterDD(smallDDArray) {
+    var newArr = [];
+    for(var i = 0; i < smallDDArray.length; i++) {
+        if(i == 0) {
+            if(smallDDArray[i+1] != smallDDArray[i]+1) {
+                smallDDArray[i] = 0;
+            }
+            else {
+                newArr.push(smallDDArray[i]);
+            }
+        } 
+        else {
+            if(smallDDArray[i-1] != smallDDArray[i]-1 && smallDDArray[i+1] != smallDDArray[i]+1) {
+                smallDDArray[i] = 0;
+            }
+            else { 
+                newArr.push(smallDDArray[i]);
+            }
+        }
+    }
+    return newArr;
+}
 
 function eucl(x1, y1, x2, y2) {
     dx = Math.abs(x1-x2);
@@ -232,6 +255,8 @@ function computeSmallDD(matchId) {
         }
 
         smallDDIntersect(winSmallDDArray, loseSmallDDArray);
+
+        smallDDArray.sort(function(a,b) { return a-b; });
 
         function smallDDIntersect(arr1, arr2) {
             for(var i = 0; i < arr1.length; i++) {
@@ -339,7 +364,6 @@ function computeInterTeamDistArr(matchId, smallDDArray) {
 
         var color = d3.scale.category10();
 
-
         circle = svg.append("g")
         .selectAll("circle")
         .data(data)
@@ -349,6 +373,8 @@ function computeInterTeamDistArr(matchId, smallDDArray) {
             function(d) {
                 if(avgPosListWinX.indexOf(Math.round(d.x))!=-1) {
                     return (((d.x * 6) + 3) + 15);
+                }else{
+                    return -100;
                 }
             }
         )
@@ -356,6 +382,8 @@ function computeInterTeamDistArr(matchId, smallDDArray) {
             function(d) {
                 if(avgPosListWinY.indexOf(Math.round(d.y))!=-1) {
                     return (((124 - d.y) * 6) + 3) + 15;
+                }else{
+                    return -100;
                 }
             }
         )
@@ -363,10 +391,10 @@ function computeInterTeamDistArr(matchId, smallDDArray) {
         .attr("class","tfCircle")
         .style("fill", 
                 function(d) { 
-                if(d.LabelValue != 17 && d.LabelValue != 18){
-                    return color(d.LabelValue); 
+                    if(d.LabelValue != 17 && d.LabelValue != 18){
+                        return color(d.LabelValue); 
+                    }
                 }
-            }
         );
 
         /**
