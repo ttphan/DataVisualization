@@ -280,7 +280,11 @@ function computeSmallDD(matchId) {
 
         smallDDArray = filterDD(smallDDArray);
 
-        computeInterTeamDistArr(matchId, smallDDArray);
+        var clusterArray = defineClusters(smallDDArray);
+
+        console.log(clusterArray);
+
+        computeInterTeamDistArr(matchId, smallDDArray, clusterArray);
 
         function smallDDIntersect(arr1, arr2) {
             for(var i = 0; i < arr1.length; i++) {
@@ -301,7 +305,31 @@ function computeSmallDD(matchId) {
     return smallDDArray;
 }
 
-function computeInterTeamDistArr(matchId, smallDDArray) {
+function defineClusters(arr) {
+    var cluster = {};
+    var index = 0;
+    cluster[arr[0]] = index;
+
+    for (var i = 1; i <= arr.length; i++) {
+        if (arr[i+1] - arr[i] < 30) {
+            cluster[arr[i]] = index;
+        }
+        else if (i == arr.length) {
+            cluster[arr[i-1]] = index;
+        }
+        else {
+            cluster[arr[i]] = index;
+
+            index++;
+        }
+    }
+
+    return cluster;
+}
+
+
+
+function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
     var matchTime;
     var winTeamPlayers = [];
     var loseTeamPlayers = [];
@@ -320,6 +348,8 @@ function computeInterTeamDistArr(matchId, smallDDArray) {
 
     d3.csv("scripts/deliverables/match-" + matchId + "-zones.csv", function(error, data) {
         matchTime = 1;
+        var clusters = [];
+
         data.forEach(function(d) {
             d.t = +d.t;
             d.x = +d.x;
@@ -340,6 +370,31 @@ function computeInterTeamDistArr(matchId, smallDDArray) {
 
             
             if (smallDDArray.indexOf(d.tsync)!=-1){
+                var clusterIndex = clusterArray[d.tsync];
+
+                if (clusters[clusterIndex] == undefined) {
+                    clusters[clusterIndex] = {};
+                }
+                
+                var xHigh = clusters[clusterIndex].xHigh;
+                var xLow = clusters[clusterIndex].xLow;
+                var yHigh = clusters[clusterIndex].yHigh;
+                var yLow = clusters[clusterIndex].yLow;
+
+                if (xHigh == undefined || xHigh < d.x) {
+                    xHigh = d.x;
+                }
+                if (xLow == undefined || xLow > d.x) {
+                    xLow = d.x;
+                }
+                if (yHigh == undefined || yHigh < d.y) {
+                    yHigh = d.y;
+                }
+                if (yLow == undefined || yLow > d.y) {
+                    yLow = d.y;
+                }
+
+
                 if (d.won==1){
                     if (posListWinX[d.tsync] == null) {
                         posListWinX[d.tsync] = 0;
@@ -350,7 +405,8 @@ function computeInterTeamDistArr(matchId, smallDDArray) {
 
                     posListWinX[d.tsync] += d.x;
                     posListWinY[d.tsync] += d.y;
-                }else {
+                } 
+                else {
                     if (posListLoseX[d.tsync] == null) {
                         posListLoseX[d.tsync] = 0;
                     }
@@ -363,7 +419,10 @@ function computeInterTeamDistArr(matchId, smallDDArray) {
                 }
             }
 
+
         });
+
+        clusters.forEach(console.log("hallo?"));
 
         var avgPosListWinX = avgArray(posListWinX);
         var avgPosListWinY = avgArray(posListWinY);
