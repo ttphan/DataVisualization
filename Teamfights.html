@@ -343,18 +343,11 @@ function computeInterTeamDistArr(matchId, smallDDArray) {
         });
 
         var avgPosListWinX = avgArray(posListWinX);
-        // console.log("avgPosListWinX: ");
-        // console.log(avgPosListWinX);
         var avgPosListWinY = avgArray(posListWinY);
-        // console.log("avgPosListWinY: ");
-        // console.log(avgPosListWinY);
-      
+ 
         var avgPosListLoseX = avgArray(posListLoseX);
-        // console.log("avgPosListLoseX: ");
-        // console.log(avgPosListLoseX);
         var avgPosListLoseY = avgArray(posListLoseY);
-        // console.log("avgPosListLoseY: ");
-        // console.log(avgPosListLoseY);
+
 
         //Lijst met alle afstanden tussen teams op tijdstippen waarop DD kleiner is dan een bepaalde waarde.
         var interTeamDistArr = euclArray(avgPosListWinX, avgPosListWinY, avgPosListLoseX, 
@@ -364,27 +357,31 @@ function computeInterTeamDistArr(matchId, smallDDArray) {
 
         var color = d3.scale.category10();
 
+        // Filter invalid points
+        var filteredData = [];
+
+        data.forEach(function(d) {
+            if(avgPosListWinX.indexOf(Math.round(d.x)) != -1) {
+                if(avgPosListWinY.indexOf(Math.round(d.y)) != -1) {
+                    filteredData.push({x: d.x, y: d.y});
+                }
+            }
+        });
+
+
         circle = svg.append("g")
         .selectAll("circle")
-        .data(data)
+        .data(filteredData)
         .enter()
         .append("circle")
         .attr("cx", 
             function(d) {
-                if(avgPosListWinX.indexOf(Math.round(d.x))!=-1) {
-                    return (((d.x * 6) + 3) + 15);
-                }else{
-                    return -100;
-                }
+                return (((d.x * 6) + 3) + 15);
             }
         )
         .attr("cy", 
             function(d) {
-                if(avgPosListWinY.indexOf(Math.round(d.y))!=-1) {
-                    return (((124 - d.y) * 6) + 3) + 15;
-                }else{
-                    return -100;
-                }
+                return (((124 - d.y) * 6) + 3) + 15;
             }
         )
         .attr("r", 3)
