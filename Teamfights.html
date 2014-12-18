@@ -452,19 +452,23 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
                 // 10 players, so divide by 10
                 cluster.cLength = cluster.cLength / 10;
 
-                d3.select("#info")
-                        .append("label")
-                        .attr("class", "infoChildren")
-                        .text("Team fight " + index + " ")
-                        .style("color", colors[index-1])
-                        .append("input")
+                var label = d3.select("#info")
+                            .append("label")
+                            .attr("class", "infoChildren")
+                            .style("color", colors[index-1]);
+
+                label.append("input")
                         .attr("class", "infoChildren")
                         .attr("checked", true)
                         .attr("value", index-1)
                         .attr("type", "checkbox")
                         .on("change", function() {
                             console.log(this.id);
-                        });
+                        })
+               
+               label.each(function() {
+                    this.appendChild(document.createTextNode(" Team fight " + index));
+                });                        
                 
                 d3.select("#info").append("br");
             }
