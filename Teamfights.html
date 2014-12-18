@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Team Fights DoTA 2</title>
+    <title>Team Fights DotA 2</title>
     <meta charset="utf-8">
     <link href=bootstrap-3.1.1-dist/css/bootstrap.css rel=stylesheet media="screen">
 </head>
@@ -113,7 +113,7 @@ function getMatch(matchId) {
     computeSmallDD(matchId);
 }
 
-
+// Removes the ellipses and team fight info.
 function reset() {
     svg.selectAll("ellipse")
         .data([])
@@ -221,7 +221,10 @@ function defineClusters(arr) {
     return cluster;
 }
 
-
+/** 
+ * Computes the inter-team distances, filters the clusters based on these distances and
+ * draws the ellipses
+ */
 function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
     var matchTime;
     var winTeamPlayers = [];
@@ -331,7 +334,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
         var avgPosListLoseY = avgArray(posListLoseY);
 
 
-        //Lijst met alle afstanden tussen teams op tijdstippen waarop DD kleiner is dan een bepaalde waarde.
+        // Array containing distances between team fights by tsync.
         var interTeamDistArr = euclArray(avgPosListWinX, avgPosListWinY, avgPosListLoseX, avgPosListLoseY);
 
         var interTeamThreshold = 30;
@@ -364,27 +367,6 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
                 // 10 players, so divide by 10
                 cluster.cLength = cluster.cLength / 10;
 
-                // var label = d3.select("#info")
-                //             .append("label")
-                //             .attr("class", "infoChildren")
-                //             .style("color", colors[index-1]);
-
-                // label.append("input")
-                //         .attr("class", "infoChildren")
-                //         .attr("checked", true)
-                //         .attr("value", index-1)
-                //         .attr("type", "checkbox")
-                //         .on("change", function() {
-                //             var type = this.value;
-                //             var display = this.checked ? "inline" : "none";
-                //         })
-               
-                
-                // label.each(function() {
-                //     this.appendChild(document.createTextNode(" Team fight " + index));
-                // });                        
-                
-                // d3.select("#info").append("br");
                 var minMin = Math.floor(minmax[0] / 60);
                 var minSec = minmax[0] % 60;
                 if (minSec < 10) {
@@ -415,8 +397,6 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
                 return c;
             }
         });
-
-        var newClusters = deepCopy(clusters);
 
         h1.attr("class", "infoChildren")
             .text(Object.keys(clusters).length + " team fights");
@@ -461,24 +441,6 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
 /**
  * Utility Functions
  */
-
-function deepCopy(obj) {
-    if (Object.prototype.toString.call(obj) === '[object Array]') {
-        var out = [], i = 0, len = obj.length;
-        for ( ; i < len; i++ ) {
-            out[i] = arguments.callee(obj[i]);
-        }
-        return out;
-    }
-    if (typeof obj === 'object') {
-        var out = {}, i;
-        for ( i in obj ) {
-            out[i] = arguments.callee(obj[i]);
-        }
-        return out;
-    }
-    return obj;
-}
 
 function eucl(x1, y1, x2, y2) {
     dx = Math.abs(x1-x2);
