@@ -36,11 +36,15 @@
         overflow: hidden;
     }
 
-    #dropDown {
+    #dropDown, #info {
         width: auto;
         overflow: hidden;
         padding-left: 100px;
         padding-top: 50px;
+    }
+
+    #info {
+        color: white;
     }
 
 
@@ -53,6 +57,8 @@
     <div id="svgArea"></div>
 
     <div id="dropDown"></div>
+
+    <div id="info"></div>
 </div>
 
 <script src=D3/d3.js></script>
@@ -109,37 +115,6 @@ d3.csv("scripts/deliverables/matches.csv",function(error, data) {
        .attr("value", function (d) { return d.match; });        
 });
 
-// //Inkleuren van de kaart.
-// d3.csv("data/Dota-Labels.csv",function(error, data) {
-//     data.forEach(function(d) {
-//         d.x = +d.x;
-//         d.y = +d.y;
-//         d.SectionLabel = d.SectionLabel;
-//         d.LabelValue = +d.LabelValue;
-//     });
-
-//     var color = d3.scale.category20();
-
-
-//     circle = svg.append("g")
-//         .selectAll("circle")
-//         .data(data)
-//         .enter()
-//         .append("circle")
-//         .attr("cx", function(d){return ((d.x * 6) + 3) + 15})
-//         .attr("cy", function(d){return (((124 - d.y) * 6) + 3) + 15})
-//         .attr("r", 3)
-//         .attr("class","gridCircle")
-//         .style("fill", 
-//                 function(d) { 
-//                 if(d.LabelValue != 17 && d.LabelValue != 18){
-//                     return color(d.LabelValue); 
-//                 }
-//             }
-//         );
-// });
-
-
 /**
  * Utility Functions
  */
@@ -186,7 +161,6 @@ function menuChanged() {
     var selectedValue = d3.event.target.value;
     
     if (!isNaN(selectedValue) && selectedValue > 0) {
-        console.log(selectedValue);
         getMatch(selectedValue);
     }
 }
@@ -227,15 +201,18 @@ function filterDD(arr) {
 
 //GET MATCH
 function getMatch(matchId) {
-    resetGrid();
+    reset();
     computeSmallDD(matchId);
 }
 
-function resetGrid() {
+function reset() {
     svg.selectAll("ellipse")
         .data([])
         .exit()
         .remove();
+
+    d3.selectAll("#info p").remove();
+    d3.selectAll("#info h1").remove();
 }
 
 
@@ -290,8 +267,6 @@ function computeSmallDD(matchId) {
 
         var clusterArray = defineClusters(smallDDArray);
 
-        console.log(clusterArray);
-
         computeInterTeamDistArr(matchId, smallDDArray, clusterArray);
 
         function smallDDIntersect(arr1, arr2) {
@@ -329,9 +304,6 @@ function defineClusters(arr) {
         }
     }
 
-    // Last data element
-    cluster[arr[arr.length]] = index; 
-
     return cluster;
 }
 
@@ -355,7 +327,6 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
     var posListLoseY = [];
 
     d3.csv("scripts/deliverables/match-" + matchId + "-zones.csv", function(error, data) {
-        matchTime = 1;
         var clusters = [];
 
         data.forEach(function(d) {
@@ -371,11 +342,6 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
             d.tper = +d.tper;
             d.tier = d.tier;
             d.zone = d.zone;
-
-            if (matchTime < d.tsync + 1) {
-                matchTime = d.tsync + 1;
-            }
-
             
             if (smallDDArray.indexOf(d.tsync)!=-1){
                 var clusterIndex = clusterArray[d.tsync];
@@ -395,22 +361,24 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
                     };
                 }
 
-                if (clusters[clusterIndex].xHigh < d.x) {
-                    clusters[clusterIndex].xHigh = d.x;
+                var cluster = clusters[clusterIndex];
+
+                if (cluster.xHigh < d.x) {
+                    cluster.xHigh = d.x;
                 }
-                if (clusters[clusterIndex].xLow > d.x) {
-                    clusters[clusterIndex].xLow = d.x;
+                if (cluster.xLow > d.x) {
+                    cluster.xLow = d.x;
                 }
-                if (clusters[clusterIndex].yHigh < d.y) {
-                    clusters[clusterIndex].yHigh = d.y;
+                if (cluster.yHigh < d.y) {
+                    cluster.yHigh = d.y;
                 }
-                if (clusters[clusterIndex].yLow > d.y) {
-                    clusters[clusterIndex].yLow = d.y;
+                if (cluster.yLow > d.y) {
+                    cluster.yLow = d.y;
                 }
 
-                clusters[clusterIndex].xSum += d.x;
-                clusters[clusterIndex].ySum += d.y;
-                clusters[clusterIndex].cLength++;
+                cluster.xSum += d.x;
+                cluster.ySum += d.y;
+                cluster.cLength++;
 
 
                 if (d.won==1){
@@ -440,7 +408,11 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
 
         });
 
-        var totalCLength = 0;
+        var colors = colorbrewer.Set1[9]
+                    .concat(colorbrewer.Set2[8])
+                    .concat(colorbrewer.Set3[12]);
+
+        d3.select("#info").append("h1").text(Object.keys(clusters).length + " team fights");
 
         clusters.forEach(function(cluster) {
             cluster.xAvg = cluster.xSum / cluster.cLength;
@@ -449,38 +421,39 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
             // 10 players, so divide by 10
             cluster.cLength = cluster.cLength / 10;
 
-            totalCLength += cluster.cLength;
+            var index = cluster.cIndex + 1;
+
+            d3.select("#info")
+                .append("p")
+                .text("Team fight " + index)
+                .style("color", colors[cluster.cIndex]);
         });
 
+        
 
-        var avgPosListWinX = avgArray(posListWinX);
-        var avgPosListWinY = avgArray(posListWinY);
+        // var avgPosListWinX = avgArray(posListWinX);
+        // var avgPosListWinY = avgArray(posListWinY);
  
-        var avgPosListLoseX = avgArray(posListLoseX);
-        var avgPosListLoseY = avgArray(posListLoseY);
+        // var avgPosListLoseX = avgArray(posListLoseX);
+        // var avgPosListLoseY = avgArray(posListLoseY);
 
 
-        //Lijst met alle afstanden tussen teams op tijdstippen waarop DD kleiner is dan een bepaalde waarde.
-        var interTeamDistArr = euclArray(avgPosListWinX, avgPosListWinY, avgPosListLoseX, 
-            avgPosListLoseY);
+        // //Lijst met alle afstanden tussen teams op tijdstippen waarop DD kleiner is dan een bepaalde waarde.
+        // var interTeamDistArr = euclArray(avgPosListWinX, avgPosListWinY, avgPosListLoseX, 
+        //     avgPosListLoseY);
 
-        console.log(interTeamDistArr);
+        
 
-        var colors = colorbrewer.RdBu[9];
-        colors = colors.concat(colorbrewer.Purples[7]).concat(colorbrewer.Oranges[7]);
+        // // Filter invalid points
+        // var filteredData = [];
 
-        // Filter invalid points
-        var filteredData = [];
-
-        data.forEach(function(d) {
-            if(avgPosListWinX.indexOf(Math.round(d.x)) != -1) {
-                if(avgPosListWinY.indexOf(Math.round(d.y)) != -1) {
-                    filteredData.push({x: d.x, y: d.y});
-                }
-            }
-        });
-
-        console.log (totalCLength);
+        // data.forEach(function(d) {
+        //     if(avgPosListWinX.indexOf(Math.round(d.x)) != -1) {
+        //         if(avgPosListWinY.indexOf(Math.round(d.y)) != -1) {
+        //             filteredData.push({x: d.x, y: d.y});
+        //         }
+        //     }
+        // });
 
         ellipse = svg.append("g")
             .selectAll("ellipse")
@@ -508,7 +481,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
                 }
             )
             .attr("fill-opacity", function(c) {
-                return 0.4 + (c.cLength / totalCLength);
+                return 0.75;
             })
             .style("fill",
                 function(c) {
@@ -516,36 +489,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
                 }
             );
 
-        // circle = svg.append("g")
-        // .selectAll("circle")
-        // .data(filteredData)
-        // .enter()
-        // .append("circle")
-        // .attr("cx", 
-        //     function(d) {
-        //         return (((d.x * 6) + 3) + 15);
-        //     }
-        // )
-        // .attr("cy", 
-        //     function(d) {
-        //         return (((124 - d.y) * 6) + 3) + 15;
-        //     }
-        // )
-        // .attr("r", 3)
-        // .attr("class","tfCircle")
-        // .style("fill", "blue"
-        // );
-
-        // function createPlayerLists(d) {
-        //     if(d.won == 1 && (winTeamPlayers.indexOf(d.player) == -1)) { //
-        //         winTeamPlayers.push(d.player);
-        //     } else if(d.won == 0 && (loseTeamPlayers.indexOf(d.player) == -1)){ //
-        //         loseTeamPlayers.push(d.player);
-        //     }
-        // }
-
-
-
+        console.log(clusterArray);
     });
 }
 
