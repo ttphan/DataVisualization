@@ -211,8 +211,9 @@ function reset() {
         .exit()
         .remove();
 
-    d3.selectAll("#info p").remove();
-    d3.selectAll("#info h1").remove();
+    d3.selectAll("#info .infoChildren").remove();
+    d3.selectAll("#info br").remove();
+
 }
 
 
@@ -228,7 +229,7 @@ function computeSmallDD(matchId) {
     var earlyGame = 100;
 
     // Smallest (100 * n)% of the win/loseArray
-    var treshold = 0.3;
+    var threshold = 0.3;
 
     d3.csv("scripts/deliverables/match-" + matchId + "-distance.csv", function(error, data) {
         data.forEach(function(d) {
@@ -250,11 +251,11 @@ function computeSmallDD(matchId) {
             
         });
 
-        // Sort both arrays by DD and get the first (100*treshold)%.
+        // Sort both arrays by DD and get the first (100*threshold)%.
         winArray.sort(comparison);
         loseArray.sort(comparison);
 
-        for (var i = 0; i < (winArray.length*treshold); i++) {
+        for (var i = 0; i < (winArray.length*threshold); i++) {
             winSmallDDArray.push(winArray[i][0]);
             loseSmallDDArray.push(loseArray[i][0]);
         }
@@ -308,7 +309,6 @@ function defineClusters(arr) {
 }
 
 
-
 function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
     var matchTime;
     var winTeamPlayers = [];
@@ -357,7 +357,8 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
                         yHigh: 0, 
                         xLow: Number.POSITIVE_INFINITY, 
                         yLow: Number.POSITIVE_INFINITY,
-                        cLength: 0
+                        cLength: 0,
+                        time: []
                     };
                 }
 
@@ -379,6 +380,8 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
                 cluster.xSum += d.x;
                 cluster.ySum += d.y;
                 cluster.cLength++;
+
+                cluster.time.push(d.tsync);
 
 
                 if (d.won==1){
@@ -408,52 +411,76 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
 
         });
 
+        var avgPosListWinX = avgArray(posListWinX);
+        var avgPosListWinY = avgArray(posListWinY);
+ 
+        var avgPosListLoseX = avgArray(posListLoseX);
+        var avgPosListLoseY = avgArray(posListLoseY);
+
+
+        //Lijst met alle afstanden tussen teams op tijdstippen waarop DD kleiner is dan een bepaalde waarde.
+        var interTeamDistArr = euclArray(avgPosListWinX, avgPosListWinY, avgPosListLoseX, 
+            avgPosListLoseY);
+
+        var interTeamThreshold = 30;
+
         var colors = colorbrewer.Set1[9]
                     .concat(colorbrewer.Set2[8])
                     .concat(colorbrewer.Set3[12]);
 
-        d3.select("#info").append("h1").text(Object.keys(clusters).length + " team fights");
+        var h1 = d3.select("#info")
+                    .append("h1");
+
+        var index = 0;
+        var toDelete = [];
 
         clusters.forEach(function(cluster) {
-            cluster.xAvg = cluster.xSum / cluster.cLength;
-            cluster.yAvg = cluster.ySum / cluster.cLength;
+            var minmax = d3.extent(cluster.time);
 
-            // 10 players, so divide by 10
-            cluster.cLength = cluster.cLength / 10;
+            var mean = d3.mean(interTeamDistArr.slice(minmax[0], minmax[1]), function(g) {
+                if (g > 0) {
+                    return g;
+                }
+            });
 
-            var index = cluster.cIndex + 1;
+            if (mean <= interTeamThreshold) {
+                index++;
 
-            d3.select("#info")
-                .append("p")
-                .text("Team fight " + index)
-                .style("color", colors[cluster.cIndex]);
+                cluster.xAvg = cluster.xSum / cluster.cLength;
+                cluster.yAvg = cluster.ySum / cluster.cLength;
+
+                // 10 players, so divide by 10
+                cluster.cLength = cluster.cLength / 10;
+
+                d3.select("#info")
+                        .append("label")
+                        .attr("class", "infoChildren")
+                        .text("Team fight " + index + " ")
+                        .style("color", colors[index-1])
+                        .append("input")
+                        .attr("class", "infoChildren")
+                        .attr("checked", true)
+                        .attr("value", index-1)
+                        .attr("type", "checkbox")
+                        .on("change", function() {
+                            console.log(this.id);
+                        });
+                
+                d3.select("#info").append("br");
+            }
+            else {
+                toDelete.push(cluster.cIndex);
+            }
         });
 
-        
+        clusters = clusters.filter(function (c) {
+            if (toDelete.indexOf(c.cIndex) == -1) {
+                return c
+            }
+        });
 
-        // var avgPosListWinX = avgArray(posListWinX);
-        // var avgPosListWinY = avgArray(posListWinY);
- 
-        // var avgPosListLoseX = avgArray(posListLoseX);
-        // var avgPosListLoseY = avgArray(posListLoseY);
-
-
-        // //Lijst met alle afstanden tussen teams op tijdstippen waarop DD kleiner is dan een bepaalde waarde.
-        // var interTeamDistArr = euclArray(avgPosListWinX, avgPosListWinY, avgPosListLoseX, 
-        //     avgPosListLoseY);
-
-        
-
-        // // Filter invalid points
-        // var filteredData = [];
-
-        // data.forEach(function(d) {
-        //     if(avgPosListWinX.indexOf(Math.round(d.x)) != -1) {
-        //         if(avgPosListWinY.indexOf(Math.round(d.y)) != -1) {
-        //             filteredData.push({x: d.x, y: d.y});
-        //         }
-        //     }
-        // });
+        h1.attr("class", "infoChildren")
+            .text(Object.keys(clusters).length + " team fights");
 
         ellipse = svg.append("g")
             .selectAll("ellipse")
@@ -488,11 +515,8 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
                     return colors[c.cIndex];
                 }
             );
-
-        console.log(clusterArray);
     });
 }
-
 
 </script>
 </body>
