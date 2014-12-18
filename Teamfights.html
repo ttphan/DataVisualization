@@ -219,11 +219,16 @@ function filterDD(arr) {
 
 //GET MATCH
 function getMatch(matchId) {
+    resetGrid();
     computeSmallDD(matchId);
-    //var interTeamDistArr = computeInterTeamDistArr(matchId, smallDDArray);
 }
 
-
+function resetGrid() {
+    var circle = svg.selectAll("circle")
+                    .data([])
+                    .exit()
+                    .remove();
+}
 
 
 function computeSmallDD(matchId) {
