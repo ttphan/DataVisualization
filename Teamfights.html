@@ -16,14 +16,6 @@
         font: 10px sans-serif;
     }
 
-    .gridCircle {
-        opacity:0;
-    }
-
-    .tfCircle {
-        opacity:1;
-    }
-
     .tfEllipse {
         opacity:0.3;
     }
@@ -78,7 +70,7 @@ var svg = d3.select("#svgArea").append("svg")
         .append("g");
 
 
-//!!!!!!!!!IMAGE HERE!!!!!!!!!!
+//Image of map is loaded here
 svg.append("svg:image")
         .attr("x", margin.left)
         .attr("y", margin.top)
@@ -87,9 +79,6 @@ svg.append("svg:image")
         .attr("xlink:href","HighResMap.jpg")
 
 
-/**
- * FIX SCRIPT!!!!!!!!
- */
 var dropDown = d3.select("#dropDown").append("select")
                     .attr("name", "match-list");
 
@@ -98,6 +87,7 @@ dropDown.on("change", menuChanged);
 dropDown.append("option")
     .text("<SELECT A MATCH>");
 
+//Custom created `matches' file is read here. This is used for selecting matches in the application.
 d3.csv("scripts/deliverables/matches.csv",function(error, data) {
     data.unshift(0);
 
@@ -115,95 +105,14 @@ d3.csv("scripts/deliverables/matches.csv",function(error, data) {
        .attr("value", function (d) { return d.match; });        
 });
 
-/**
- * Utility Functions
- */
-
-function eucl(x1, y1, x2, y2) {
-    dx = Math.abs(x1-x2);
-    dy = Math.abs(y1-y2);
-    distance = Math.sqrt((dx*dx) + (dy*dy));
-    return(distance);
-}   
-
-function makeArrayOf(value, length) {
-  var arr = [];
-  var i = length;
-  while (i--) {
-    arr[i] = value;
-  }
-  return arr;
-}
-
-function avgArray(arr) {
-    var newArr = [];
-    for(var i = 0; i < arr.length; i++) {
-        if(arr[i] > 0) {
-            newArr[i] = arr[i] / 5;
-        }
-        else {
-            newArr[i] = 0;
-        }
-    }
-
-    return newArr;
-}
-
-function euclArray(arr1, arr2, arr3, arr4) {
-    var euclArr = [];
-    for(var i = 0; i < arr1.length; i++) {
-        euclArr[i] = eucl(arr1[i], arr2[i], arr3[i], arr4[i]);
-    }
-    return euclArr;
-}
-
-function menuChanged() {
-    var selectedValue = d3.event.target.value;
-    
-    if (!isNaN(selectedValue) && selectedValue > 0) {
-        getMatch(selectedValue);
-    }
-}
 
 
-function filterDD(arr) {
-        var newArr = [];
-        var length = 0;
-
-        for(var i = 0; i < arr.length; i++) {
-            if(i == 0) {
-                if(arr[i+1] != arr[i]+1) {
-                    arr[i] = 0;
-                }
-                else {
-                    newArr.push(arr[i]);
-                }
-            }
-            else if(i == arr.length-1){
-                if(arr[i-1] != arr[i]-1) {
-                    arr[i] = 0;
-                } 
-                else {
-                    newArr.push(arr[i]);
-                }
-            } 
-            else {
-                if(arr[i-1] != arr[i]-1 && arr[i+1] != arr[i]+1) {
-                    arr[i] = 0;
-                }
-                else { 
-                    newArr.push(arr[i]);
-                }
-            }
-        }
-        return newArr;
-    }
-
-//GET MATCH
+//Loads the visualization for the match corresponding to matchID. Resets the image if a new match is selected.
 function getMatch(matchId) {
     reset();
     computeSmallDD(matchId);
 }
+
 
 function reset() {
     svg.selectAll("ellipse")
@@ -213,10 +122,11 @@ function reset() {
 
     d3.selectAll("#info .infoChildren").remove();
     d3.selectAll("#info br").remove();
-
 }
 
 
+//This function computes the points in time at which the players of both teams are close to their team members 
+//(small intra-team distance). This function also initiates the retrieval of other data.
 function computeSmallDD(matchId) {
     var winArray = [];
     var loseArray = [];
@@ -260,10 +170,12 @@ function computeSmallDD(matchId) {
             loseSmallDDArray.push(loseArray[i][0]);
         }
 
+        //Intersect both arrays to find moments at which players of both teams are close to their team members.
         smallDDIntersect(winSmallDDArray, loseSmallDDArray);
 
         smallDDArray.sort(function(a,b) { return a-b; });
 
+        //Remove some noise (single time points that appear in smallDDArray that can not possibly be team fights).
         smallDDArray = filterDD(smallDDArray);
 
         var clusterArray = defineClusters(smallDDArray);
@@ -271,16 +183,16 @@ function computeSmallDD(matchId) {
         computeInterTeamDistArr(matchId, smallDDArray, clusterArray);
 
         function smallDDIntersect(arr1, arr2) {
-            for(var i = 0; i < arr1.length; i++) {
-                for(var j = 0; j < arr2.length; j++) {
-                    if(arr1[i] == arr2[j]) {
+            for (var i = 0; i < arr1.length; i++) {
+                for (var j = 0; j < arr2.length; j++) {
+                    if (arr1[i] == arr2[j]) {
                         smallDDArray.push(arr1[i]);
                     }
                 }
             }
         }
 
-        // Comparison for double arrays
+        // Comparison for 2D arrays.
         function comparison(a, b) {
             return a[1] - b[1];
         }
@@ -289,6 +201,7 @@ function computeSmallDD(matchId) {
     return smallDDArray;
 }
 
+//Create clusters of time points that probably belong together.
 function defineClusters(arr) {
     var cluster = {};
     var index = 0;
@@ -343,7 +256,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
             d.tier = d.tier;
             d.zone = d.zone;
             
-            if (smallDDArray.indexOf(d.tsync)!=-1){
+            if (smallDDArray.indexOf(d.tsync)!=-1) {
                 var clusterIndex = clusterArray[d.tsync];
 
                 if (clusters[clusterIndex] == undefined) {
@@ -384,7 +297,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
                 cluster.time.push(d.tsync);
 
 
-                if (d.won==1){
+                if (d.won==1) {
                     if (posListWinX[d.tsync] == null) {
                         posListWinX[d.tsync] = 0;
                     }
@@ -419,8 +332,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
 
 
         //Lijst met alle afstanden tussen teams op tijdstippen waarop DD kleiner is dan een bepaalde waarde.
-        var interTeamDistArr = euclArray(avgPosListWinX, avgPosListWinY, avgPosListLoseX, 
-            avgPosListLoseY);
+        var interTeamDistArr = euclArray(avgPosListWinX, avgPosListWinY, avgPosListLoseX, avgPosListLoseY);
 
         var interTeamThreshold = 30;
 
@@ -506,8 +418,6 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
 
         var newClusters = deepCopy(clusters);
 
-        console.log(newClusters);
-
         h1.attr("class", "infoChildren")
             .text(Object.keys(clusters).length + " team fights");
 
@@ -548,6 +458,10 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
     });
 }
 
+/**
+ * Utility Functions
+ */
+
 function deepCopy(obj) {
     if (Object.prototype.toString.call(obj) === '[object Array]') {
         var out = [], i = 0, len = obj.length;
@@ -565,6 +479,87 @@ function deepCopy(obj) {
     }
     return obj;
 }
+
+function eucl(x1, y1, x2, y2) {
+    dx = Math.abs(x1-x2);
+    dy = Math.abs(y1-y2);
+    distance = Math.sqrt((dx*dx) + (dy*dy));
+    return(distance);
+}   
+
+function makeArrayOf(value, length) {
+  var arr = [];
+  var i = length;
+  while (i--) {
+    arr[i] = value;
+  }
+  return arr;
+}
+
+function avgArray(arr) {
+    var newArr = [];
+    for (var i = 0; i < arr.length; i++) {
+        if (arr[i] > 0) {
+            newArr[i] = arr[i] / 5;
+        }
+        else {
+            newArr[i] = 0;
+        }
+    }
+
+    return newArr;
+}
+
+function euclArray(arr1, arr2, arr3, arr4) {
+    var euclArr = [];
+    for (var i = 0; i < arr1.length; i++) {
+        euclArr[i] = eucl(arr1[i], arr2[i], arr3[i], arr4[i]);
+    }
+    return euclArr;
+}
+
+function menuChanged() {
+    var selectedValue = d3.event.target.value;
+    
+    if (!isNaN(selectedValue) && selectedValue > 0) {
+        getMatch(selectedValue);
+    }
+}
+
+
+function filterDD(arr) {
+    var newArr = [];
+    var length = 0;
+
+    for (var i = 0; i < arr.length; i++) {
+        if (i == 0) {
+            if (arr[i+1] != arr[i]+1) {
+                arr[i] = 0;
+            }
+            else {
+                newArr.push(arr[i]);
+            }
+        }
+        else if (i == arr.length-1) {
+            if (arr[i-1] != arr[i]-1) {
+                arr[i] = 0;
+            } 
+            else {
+                newArr.push(arr[i]);
+            }
+        } 
+        else {
+            if (arr[i-1] != arr[i]-1 && arr[i+1] != arr[i]+1) {
+                arr[i] = 0;
+            }
+            else { 
+                newArr.push(arr[i]);
+            }
+        }
+    }
+    return newArr;
+}
+
 
 </script>
 </body>
