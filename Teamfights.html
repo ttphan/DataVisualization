@@ -136,29 +136,6 @@ d3.csv("data/Dota-Labels.csv",function(error, data) {
  * Utility Functions
  */
 
-function filterDD(smallDDArray) {
-    var newArr = [];
-    for(var i = 0; i < smallDDArray.length; i++) {
-        if(i == 0) {
-            if(smallDDArray[i+1] != smallDDArray[i]+1) {
-                smallDDArray[i] = 0;
-            }
-            else {
-                newArr.push(smallDDArray[i]);
-            }
-        } 
-        else {
-            if(smallDDArray[i-1] != smallDDArray[i]-1 && smallDDArray[i+1] != smallDDArray[i]+1) {
-                smallDDArray[i] = 0;
-            }
-            else { 
-                newArr.push(smallDDArray[i]);
-            }
-        }
-    }
-    return newArr;
-}
-
 function eucl(x1, y1, x2, y2) {
     dx = Math.abs(x1-x2);
     dy = Math.abs(y1-y2);
@@ -206,10 +183,48 @@ function menuChanged() {
     }
 }
 
+
+function filterDD(arr) {
+        var newArr = [];
+        var length = 0;
+
+        for(var i = 0; i < arr.length; i++) {
+            if(i == 0) {
+                if(arr[i+1] != arr[i]+1) {
+                    arr[i] = 0;
+                }
+                else {
+                    newArr.push(arr[i]);
+                }
+            }
+            else if(i == arr.length-1){
+                if(arr[i-1] != arr[i]-1) {
+                    arr[i] = 0;
+                } 
+                else {
+                    newArr.push(arr[i]);
+                }
+            } 
+            else {
+                if(arr[i-1] != arr[i]-1 && arr[i+1] != arr[i]+1) {
+                    arr[i] = 0;
+                }
+                else { 
+                    newArr.push(arr[i]);
+                }
+            }
+        }
+        return newArr;
+    }
+
+//GET MATCH
 function getMatch(matchId) {
-    var smallDDArray = computeSmallDD(matchId);
-    var interTeamDistArr = computeInterTeamDistArr(matchId, smallDDArray);
+    computeSmallDD(matchId);
+    //var interTeamDistArr = computeInterTeamDistArr(matchId, smallDDArray);
 }
+
+
+
 
 function computeSmallDD(matchId) {
     var winArray = [];
@@ -258,6 +273,10 @@ function computeSmallDD(matchId) {
 
         smallDDArray.sort(function(a,b) { return a-b; });
 
+        smallDDArray = filterDD(smallDDArray);
+
+        computeInterTeamDistArr(matchId, smallDDArray);
+
         function smallDDIntersect(arr1, arr2) {
             for(var i = 0; i < arr1.length; i++) {
                 for(var j = 0; j < arr2.length; j++) {
@@ -266,7 +285,6 @@ function computeSmallDD(matchId) {
                     }
                 }
             }
-            console.log(smallDDArray);
         }
 
         // Comparison for double arrays
@@ -393,12 +411,6 @@ function computeInterTeamDistArr(matchId, smallDDArray) {
                     }
                 }
         );
-
-        /**
-        * Hier functie om players op te halen, weet niet of dit nog nodig is, hoorde bij een eerste aanpak van gisteravond.
-        */
-        //console.log("winning team:" + winTeamPlayers);
-        //console.log("losing team:" + loseTeamPlayers);
 
         function createPlayerLists(d) {
             if(d.won == 1 && (winTeamPlayers.indexOf(d.player) == -1)) { //
