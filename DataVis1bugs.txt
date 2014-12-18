@@ -4,17 +4,3 @@ Wel smallDDArray, geen interTeamDistArr:
 645153730
 
 OORZAAK: BEIDE TEAMS 'VERLIEZEN' (won = 0 voor alle spelers)
-
-
-
-
-Geen smallDDArray, geen interTeamDistArr:
-628546255
-636476209
-643216184
-644374912
-644790017
-645258275
-645260190
-
-OORZAAK: Geen momenten waarop DD lager is dan 40 in een of beide teams
