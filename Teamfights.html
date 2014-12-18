@@ -452,25 +452,46 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
                 // 10 players, so divide by 10
                 cluster.cLength = cluster.cLength / 10;
 
-                var label = d3.select("#info")
-                            .append("label")
-                            .attr("class", "infoChildren")
-                            .style("color", colors[index-1]);
+                // var label = d3.select("#info")
+                //             .append("label")
+                //             .attr("class", "infoChildren")
+                //             .style("color", colors[index-1]);
 
-                label.append("input")
-                        .attr("class", "infoChildren")
-                        .attr("checked", true)
-                        .attr("value", index-1)
-                        .attr("type", "checkbox")
-                        .on("change", function() {
-                            console.log(this.id);
-                        })
+                // label.append("input")
+                //         .attr("class", "infoChildren")
+                //         .attr("checked", true)
+                //         .attr("value", index-1)
+                //         .attr("type", "checkbox")
+                //         .on("change", function() {
+                //             var type = this.value;
+                //             var display = this.checked ? "inline" : "none";
+                //         })
                
-               label.each(function() {
-                    this.appendChild(document.createTextNode(" Team fight " + index));
-                });                        
                 
-                d3.select("#info").append("br");
+                // label.each(function() {
+                //     this.appendChild(document.createTextNode(" Team fight " + index));
+                // });                        
+                
+                // d3.select("#info").append("br");
+                var minMin = Math.floor(minmax[0] / 60);
+                var minSec = minmax[0] % 60;
+                if (minSec < 10) {
+                    minSec = "" + 0 + minSec;
+                }
+
+                var maxMin = Math.floor(minmax[1] / 60);
+                var maxSec = minmax[1] % 60;
+                if (maxSec < 10) {
+                    maxSec = "" + 0 + maxSec;
+                }
+
+                d3.select("#info")
+                    .append("p")
+                    .attr("class", "infoChildren")
+                    .text("Team fight " + index + 
+                        " (" + minMin + ":" + minSec + " - " 
+                            + maxMin + ":" + maxSec + ")")
+                    .style("color", colors[index-1]);
             }
             else {
                 toDelete.push(cluster.cIndex);
@@ -479,9 +500,13 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
 
         clusters = clusters.filter(function (c) {
             if (toDelete.indexOf(c.cIndex) == -1) {
-                return c
+                return c;
             }
         });
+
+        var newClusters = deepCopy(clusters);
+
+        console.log(newClusters);
 
         h1.attr("class", "infoChildren")
             .text(Object.keys(clusters).length + " team fights");
@@ -491,6 +516,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
             .data(clusters)
             .enter()
             .append("ellipse")
+            .property("type", 0)
             .attr("cx",
                 function(c) {
                     return ((c.xAvg * 6) + 3) + 15;
@@ -520,6 +546,24 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
                 }
             );
     });
+}
+
+function deepCopy(obj) {
+    if (Object.prototype.toString.call(obj) === '[object Array]') {
+        var out = [], i = 0, len = obj.length;
+        for ( ; i < len; i++ ) {
+            out[i] = arguments.callee(obj[i]);
+        }
+        return out;
+    }
+    if (typeof obj === 'object') {
+        var out = {}, i;
+        for ( i in obj ) {
+            out[i] = arguments.callee(obj[i]);
+        }
+        return out;
+    }
+    return obj;
 }
 
 </script>
