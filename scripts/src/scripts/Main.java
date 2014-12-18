@@ -43,10 +43,12 @@ public class Main {
 				String matchId = split[0];
 				String tier = split[4];
 				
-				if (!matches.contains(matchId)) {
-					matches.add(matchId);
-					writer.write(matchId + "," + tier);
-					writer.newLine();				
+				if(!matchId.equals("613258812") && !matchId.equals("645077087") && !matchId.equals("645153730")){
+					if (!matches.contains(matchId)) {
+						matches.add(matchId);
+						writer.write(matchId + "," + tier);
+						writer.newLine();				
+					}
 				}
 			}
 			
