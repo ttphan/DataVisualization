@@ -32,16 +32,12 @@
     #dropDown, #info {
         width: auto;
         overflow: hidden;
-        padding-left: 100px;
+        padding-left: 50px;
         padding-top: 50px;
     }
 
     #info {
         color: white;
-    }
-
-    .infoChildren:hover {
-        font-size: 20pt;
     }
 
     .hover {
@@ -402,7 +398,9 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
                     .text("Team Fight " + index + 
                         " (" + minMin + ":" + minSec + " - " 
                             + maxMin + ":" + maxSec + ")")
-                    .style("color", colors[index - 1]);
+                    .style("color", colors[index - 1])
+                    .on("mouseover", enlargeEllipseData)
+                    .on("mouseleave", shrinkEllipseData);
 
 
                 newClusters.push(cluster);
@@ -458,11 +456,11 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
 }
 
 var enlargeEllipseData = function() {
-    var ellipse = d3.select(this);
     var ellipseIndex = (this.id).split('-')[1];
     var text = d3.select("#text-"+ellipseIndex);
     
     svg.selectAll("ellipse")
+        .transition().duration(250)
         .style("fill",
             function(c) {
                 // All other ellipses
@@ -484,6 +482,7 @@ var shrinkEllipseData = function() {
     var text = d3.select("#text-"+ellipseIndex);
     
     svg.selectAll("ellipse")
+        .transition().duration(250)
         .style("fill", function(c) { return colors[c.cIndex - 1]; });
 
     text.classed('hover', false);  
