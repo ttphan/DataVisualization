@@ -86,6 +86,7 @@ colors.splice(8,1);
 colors.splice(15,1);
 colors.splice(23,1);
 
+
 //Image of map is loaded here
 svg.append("svg:image")
         .attr("x", margin.left)
@@ -361,7 +362,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
                     .append("h1");
 
         var index = 0;
-        var toDelete = [];
+        var newClusters = [];
 
         clusters.forEach(function(cluster) {
             var minmax = d3.extent(cluster.time);
@@ -374,7 +375,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
 
             if (mean <= interTeamThreshold) {
                 index++;
-                clusterIndex = cluster.cIndex;
+                cluster.cIndex = index;
 
                 cluster.xAvg = cluster.xSum / cluster.cLength;
                 cluster.yAvg = cluster.ySum / cluster.cLength;
@@ -401,19 +402,15 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
                     .text("Team Fight " + index + 
                         " (" + minMin + ":" + minSec + " - " 
                             + maxMin + ":" + maxSec + ")")
-                    .style("color", colors[clusterIndex]);
+                    .style("color", colors[index - 1]);
+
+
+                newClusters.push(cluster);
             }
 
-            else {
-                toDelete.push(cluster.cIndex);
-            }
         });
 
-        clusters = clusters.filter(function (c) {
-            if (toDelete.indexOf(c.cIndex) == -1) {
-                return c;
-            }
-        });
+        clusters = newClusters;
 
         h1.attr("class", "infoHeader")
             .text(Object.keys(clusters).length + " Team Fights");
@@ -452,7 +449,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
             })
             .style("fill",
                 function(c) {
-                    return colors[c.cIndex];
+                    return colors[c.cIndex - 1];
                 }
             )
             .on("mouseover", enlargeEllipseData)
@@ -464,6 +461,19 @@ var enlargeEllipseData = function() {
     var ellipse = d3.select(this);
     var ellipseIndex = (this.id).split('-')[1];
     var text = d3.select("#text-"+ellipseIndex);
+    
+    svg.selectAll("ellipse")
+        .style("fill",
+            function(c) {
+                // All other ellipses
+                if (c.cIndex != ellipseIndex) {
+                    return "gray";
+                }
+                // Selected ellipse
+                else {
+                    return colors[c.cIndex - 1];
+                }
+            });
 
     text.classed('hover', true);
 }
@@ -472,12 +482,12 @@ var shrinkEllipseData = function() {
     var ellipse = d3.select(this);
     var ellipseIndex = (this.id).split('-')[1];
     var text = d3.select("#text-"+ellipseIndex);
-
-    svg.selectAll("ellipse")
-    .style("fill",function(c) { return colors[c.cIndex]; })
     
+    svg.selectAll("ellipse")
+        .style("fill", function(c) { return colors[c.cIndex - 1]; });
 
-    text.classed('hover', false);
+    text.classed('hover', false);  
+
 }
 
 /**
