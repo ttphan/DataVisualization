@@ -39,6 +39,10 @@
         color: white;
     }
 
+    .infoChildren:hover {
+        font-size: 20pt;
+    }
+
 
 </style>
 
@@ -67,7 +71,7 @@ var margin = {top: 10, right: 10, bottom: 10, left: 10},
 var svg = d3.select("#svgArea").append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
-        .append("g");
+        // .append("g");
 
 
 //Image of map is loaded here
@@ -102,7 +106,7 @@ d3.csv("scripts/deliverables/matches.csv",function(error, data) {
                     .append("option");
 
     options.text(function (d) { return "Match id: " + d.match + ", tier: " + d.Tier; })
-       .attr("value", function (d) { return d.match; });        
+       .attr("value", function (d) { return d.match; });
 });
 
 
@@ -121,6 +125,7 @@ function reset() {
         .remove();
 
     d3.selectAll("#info .infoChildren").remove();
+    d3.selectAll("#info .infoHeader").remove();
     d3.selectAll("#info br").remove();
 }
 
@@ -360,6 +365,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
 
             if (mean <= interTeamThreshold) {
                 index++;
+                clusterIndex = cluster.cIndex;
 
                 cluster.xAvg = cluster.xSum / cluster.cLength;
                 cluster.yAvg = cluster.ySum / cluster.cLength;
@@ -382,14 +388,17 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
                 d3.select("#info")
                     .append("p")
                     .attr("class", "infoChildren")
-                    .text("Team fight " + index + 
+                    .attr("id", function() { return "text-"+index})
+                    .text("Team Fight " + index + 
                         " (" + minMin + ":" + minSec + " - " 
                             + maxMin + ":" + maxSec + ")")
-                    .style("color", colors[index-1]);
+                    .style("color", colors[clusterIndex]);
             }
+
             else {
                 toDelete.push(cluster.cIndex);
             }
+            console.log(toDelete);
         });
 
         clusters = clusters.filter(function (c) {
@@ -397,9 +406,10 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
                 return c;
             }
         });
+        console.log(clusters);
 
-        h1.attr("class", "infoChildren")
-            .text(Object.keys(clusters).length + " team fights");
+        h1.attr("class", "infoHeader")
+            .text(Object.keys(clusters).length + " Team Fights");
 
         ellipse = svg.append("g")
             .selectAll("ellipse")
@@ -407,6 +417,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
             .enter()
             .append("ellipse")
             .property("type", 0)
+            .attr("id", function(c) { return "ellipse-"+(c.cIndex+1); })
             .attr("cx",
                 function(c) {
                     return ((c.xAvg * 6) + 3) + 15;
