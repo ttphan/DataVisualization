@@ -77,6 +77,14 @@ var svg = d3.select("#svgArea").append("svg")
         .attr("height", height + margin.top + margin.bottom)
         // .append("g");
 
+var colors = colorbrewer.Set1[9]
+            .concat(colorbrewer.Set2[8])
+            .concat(colorbrewer.Set3[12]); 
+
+//Remove gray colors from color sets
+colors.splice(8,1);
+colors.splice(15,1);
+colors.splice(23,1);
 
 //Image of map is loaded here
 svg.append("svg:image")
@@ -230,6 +238,7 @@ function defineClusters(arr) {
     return cluster;
 }
 
+
 /** 
  * Computes the inter-team distances, filters the clusters based on these distances and
  * draws the ellipses
@@ -348,10 +357,6 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
 
         var interTeamThreshold = 30;
 
-        var colors = colorbrewer.Set1[9]
-                    .concat(colorbrewer.Set2[8])
-                    .concat(colorbrewer.Set3[12]);
-
         var h1 = d3.select("#info")
                     .append("h1");
 
@@ -459,7 +464,7 @@ var enlargeEllipseData = function() {
     var ellipse = d3.select(this);
     var ellipseIndex = (this.id).split('-')[1];
     var text = d3.select("#text-"+ellipseIndex);
-    console.log(text);
+
     text.classed('hover', true);
 }
 
@@ -467,8 +472,12 @@ var shrinkEllipseData = function() {
     var ellipse = d3.select(this);
     var ellipseIndex = (this.id).split('-')[1];
     var text = d3.select("#text-"+ellipseIndex);
-    console.log(text);
-    text.classed('hover', false);  
+
+    svg.selectAll("ellipse")
+    .style("fill",function(c) { return colors[c.cIndex]; })
+    
+
+    text.classed('hover', false);
 }
 
 /**
