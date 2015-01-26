@@ -44,6 +44,9 @@
         font-size: 20pt;
     }
 
+    .hover {
+        font-size: 20pt;
+    }
 
 </style>
 
@@ -457,7 +460,7 @@ var enlargeEllipseData = function() {
     var ellipseIndex = (this.id).split('-')[1];
     var text = d3.select("#text-"+ellipseIndex);
     console.log(text);
-    text.style("font-size", "20pt");
+    text.classed('hover', true);
 }
 
 var shrinkEllipseData = function() {
@@ -465,7 +468,7 @@ var shrinkEllipseData = function() {
     var ellipseIndex = (this.id).split('-')[1];
     var text = d3.select("#text-"+ellipseIndex);
     console.log(text);
-    text.style("font-size", "12pt");   
+    text.classed('hover', false);  
 }
 
 /**
