@@ -29,14 +29,26 @@
         overflow: hidden;
     }
 
-    #dropDown, #info {
+    .dropDown {
         width: auto;
         overflow: hidden;
-        padding-left: 50px;
-        padding-top: 50px;
+        margin-top: 50px;
     }
 
-    #info {
+    #left {
+        float: left;
+        width: 25%;
+        padding-left: 50px;
+        padding-right: 50px;
+    }
+
+    #right {
+        float: left;
+        width: 25%;
+    }
+
+
+    .info {
         color: white;
     }
 
@@ -52,9 +64,17 @@
 <div id="wrapper">
     <div id="svgArea"></div>
 
-    <div id="dropDown"></div>
+    <div class="dropDown" id="left">
+        <div id="dropDownLeft"></div>
 
-    <div id="info"></div>
+        <div class="info" id="infoLeft"></div>
+    </div>
+
+    <div class="dropDown" id="right">
+        <div id="dropDownRight"></div>
+
+        <div class="info" id="infoRight"></div>
+    </div>
 </div>
 
 <script src=D3/d3.js></script>
@@ -92,12 +112,22 @@ svg.append("svg:image")
         .attr("xlink:href","HighResMap.jpg")
 
 
-var dropDown = d3.select("#dropDown").append("select")
-                    .attr("name", "match-list");
+// Left menu
+var dropDownLeft = d3.select("#dropDownLeft").append("select")
+                    .attr("name", "match-list-left");
 
-dropDown.on("change", menuChanged);
+dropDownLeft.on("change", menuChanged);
 
-dropDown.append("option")
+dropDownLeft.append("option")
+    .text("<SELECT A MATCH>");
+
+// Right menu 
+var dropDownRight = d3.select("#dropDownRight").append("select")
+                    .attr("name", "match-list-right");
+
+dropDownRight.on("change", menuChanged);
+
+dropDownRight.append("option")
     .text("<SELECT A MATCH>");
 
 //Custom created `matches' file is read here. This is used for selecting matches in the application.
@@ -109,7 +139,15 @@ d3.csv("scripts/deliverables/matches.csv",function(error, data) {
         d.Tier = d.Tier;
     });
 
-    var options = dropDown.selectAll("option")
+    var options = dropDownLeft.selectAll("option")
+                    .data(data)
+                    .enter()
+                    .append("option");
+
+    options.text(function (d) { return "Match id: " + d.match + ", tier: " + d.Tier; })
+       .attr("value", function (d) { return d.match; });
+
+    var options = dropDownRight.selectAll("option")
                     .data(data)
                     .enter()
                     .append("option");
@@ -121,27 +159,34 @@ d3.csv("scripts/deliverables/matches.csv",function(error, data) {
 
 
 //Loads the visualization for the match corresponding to matchID. Resets the image if a new match is selected.
-function getMatch(matchId) {
-    reset();
-    computeSmallDD(matchId);
+function getMatch(matchId, side) {
+    reset(side);
+    computeSmallDD(matchId, side);
 }
 
 // Removes the ellipses and team fight info.
-function reset() {
+function reset(side) {
     svg.selectAll("ellipse")
         .data([])
         .exit()
         .remove();
 
-    d3.selectAll("#info .infoChildren").remove();
-    d3.selectAll("#info .infoHeader").remove();
-    d3.selectAll("#info br").remove();
+    if (side == "left") {
+        d3.selectAll("#infoLeft .infoChildren").remove();
+        d3.selectAll("#infoLeft .infoHeader").remove();
+        d3.selectAll("#infoLeft br").remove();
+    }
+    else {
+        d3.selectAll("#infoRight .infoChildren").remove();
+        d3.selectAll("#infoRight .infoHeader").remove();
+        d3.selectAll("#infoRight br").remove();
+    }
 }
 
 
 //This function computes the points in time at which the players of both teams are close to their team members 
 //(small intra-team distance). This function also initiates the retrieval of other data.
-function computeSmallDD(matchId) {
+function computeSmallDD(matchId, side) {
     var winArray = [];
     var loseArray = [];
 
@@ -194,7 +239,7 @@ function computeSmallDD(matchId) {
 
         var clusterArray = defineClusters(smallDDArray);
 
-        computeInterTeamDistArr(matchId, smallDDArray, clusterArray);
+        computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side);
 
         function smallDDIntersect(arr1, arr2) {
             for (var i = 0; i < arr1.length; i++) {
@@ -240,7 +285,7 @@ function defineClusters(arr) {
  * Computes the inter-team distances, filters the clusters based on these distances and
  * draws the ellipses
  */
-function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
+function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
     var matchTime;
     var winTeamPlayers = [];
     var loseTeamPlayers = [];
@@ -354,8 +399,13 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
 
         var interTeamThreshold = 30;
 
-        var h1 = d3.select("#info")
-                    .append("h1");
+        var h1 = d3.select("#infoLeft");
+
+        if (side == "right") {
+            h1 = d3.select("#infoRight");
+        }
+
+        h1 = h1.append("h1");
 
         var index = 0;
         var newClusters = [];
@@ -391,8 +441,13 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
                     maxSec = "" + 0 + maxSec;
                 }
 
-                d3.select("#info")
-                    .append("p")
+                var info = d3.select("#infoLeft");
+
+                if (side == "right") {
+                    info = d3.select("#infoRight");
+                }
+                
+                info.append("p")
                     .attr("class", "infoChildren")
                     .attr("id", function() { return "text-"+index})
                     .text("Team Fight " + index + 
@@ -402,13 +457,13 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
                     .on("mouseover", enlargeEllipseData)
                     .on("mouseleave", shrinkEllipseData);
 
-
                 newClusters.push(cluster);
             }
 
         });
 
         clusters = newClusters;
+
 
         h1.attr("class", "infoHeader")
             .text(Object.keys(clusters).length + " Team Fights");
@@ -533,9 +588,14 @@ function euclArray(arr1, arr2, arr3, arr4) {
 
 function menuChanged() {
     var selectedValue = d3.event.target.value;
+    var side = "left";
+
+    if (this.name == "match-list-right") {
+        side = "right";
+    }
     
     if (!isNaN(selectedValue) && selectedValue > 0) {
-        getMatch(selectedValue);
+        getMatch(selectedValue, side);
     }
 }
 
