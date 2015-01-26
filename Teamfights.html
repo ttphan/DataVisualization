@@ -10,6 +10,7 @@
 <style>
     body {
         background-color: #2E2D34;
+        font-size: 12pt;
     }
 
     svg {
@@ -398,7 +399,6 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
             else {
                 toDelete.push(cluster.cIndex);
             }
-            console.log(toDelete);
         });
 
         clusters = clusters.filter(function (c) {
@@ -406,10 +406,11 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
                 return c;
             }
         });
-        console.log(clusters);
 
         h1.attr("class", "infoHeader")
             .text(Object.keys(clusters).length + " Team Fights");
+
+        ellipseIndex = 0;
 
         ellipse = svg.append("g")
             .selectAll("ellipse")
@@ -417,7 +418,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
             .enter()
             .append("ellipse")
             .property("type", 0)
-            .attr("id", function(c) { return "ellipse-"+(c.cIndex+1); })
+            .attr("id", function(c) { ellipseIndex++; return "ellipse-"+(ellipseIndex); })
             .attr("cx",
                 function(c) {
                     return ((c.xAvg * 6) + 3) + 15;
@@ -445,8 +446,26 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
                 function(c) {
                     return colors[c.cIndex];
                 }
-            );
+            )
+            .on("mouseover", enlargeEllipseData)
+            .on("mouseleave", shrinkEllipseData);
     });
+}
+
+var enlargeEllipseData = function() {
+    var ellipse = d3.select(this);
+    var ellipseIndex = (this.id).split('-')[1];
+    var text = d3.select("#text-"+ellipseIndex);
+    console.log(text);
+    text.style("font-size", "20pt");
+}
+
+var shrinkEllipseData = function() {
+    var ellipse = d3.select(this);
+    var ellipseIndex = (this.id).split('-')[1];
+    var text = d3.select("#text-"+ellipseIndex);
+    console.log(text);
+    text.style("font-size", "12pt");   
 }
 
 /**
