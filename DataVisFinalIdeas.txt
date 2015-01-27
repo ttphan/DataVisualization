@@ -1,0 +1,18 @@
+Visualization ideas
+[] Amount of time spent near own towers?
+
+[] Amount of time spent in shops
+
+[x] Compare matches
+
+Match drop-down menu
+[x] Sort matches by skill level
+[] Maybe a restyle that is  A. better for visualization?, B. better/easier to use, C. in the style of DotA2?
+
+Highlights
+[x] Highlighting (+transitions)
+[] Tooltip at highlighted ellipse (or some other way of making clear which ellipse is selected)
+	[x] Tooltip
+	things that could be shown in tooltip: 
+		[x] area where teamfight took place
+		[] teamfights that happened in other match during this teamfight

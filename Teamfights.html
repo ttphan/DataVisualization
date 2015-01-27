@@ -4,6 +4,9 @@
     <title>Team Fights DotA 2</title>
     <meta charset="utf-8">
     <link href=bootstrap-3.1.1-dist/css/bootstrap.css rel=stylesheet media="screen">
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.0.min.js"></script> 
+    <script type="text/javascript" src="src/javascripts/jquery.tipsy.js"></script>
+    <link href="src/stylesheets/tipsy.css" rel="stylesheet" type="text/css" />
 </head>
 
 
@@ -97,6 +100,18 @@ var colors = colorbrewer.Set1[9]
             .concat(colorbrewer.Set2[8])
             .concat(colorbrewer.Set3[12]); 
 
+var labels = create2DArray(124);
+d3.csv("data/Dota-Labels.csv", function(error, data) { 
+    var zoneLabels = create2DArray(124);
+    data.forEach(function(d) {
+        d.x = +d.x;
+        d.y = +d.y;
+        d.SectionLabel = d.SectionLabel;
+        zoneLabels[d.x][d.y] = d.SectionLabel;
+    });
+    labels = zoneLabels;
+});
+
 //Remove gray colors from color sets
 colors.splice(8,1);
 colors.splice(15,1);
@@ -110,7 +125,6 @@ svg.append("svg:image")
         .attr("width", width)
         .attr("height", height)
         .attr("xlink:href","HighResMap.jpg")
-
 
 // Left menu
 var dropDownLeft = d3.select("#dropDownLeft").append("select")
@@ -169,7 +183,6 @@ function reset(side) {
 
     var filteredEllipses = ellipses.filter(
         function(e) {
-            console.log(e.side);
             return (e.side).indexOf(side) > -1;
         });
 
@@ -281,7 +294,6 @@ function defineClusters(arr) {
     return cluster;
 }
 
-
 /** 
  * Computes the inter-team distances, filters the clusters based on these distances and
  * draws the ellipses
@@ -304,6 +316,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
     var posListLoseY = [];
 
     d3.csv("scripts/deliverables/match-" + matchId + "-zones.csv", function(error, data) {
+
         var clusters = [];
 
         data.forEach(function(d) {
@@ -319,7 +332,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
             d.tper = +d.tper;
             d.tier = d.tier;
             d.zone = d.zone;
-            
+
             if (smallDDArray.indexOf(d.tsync)!=-1) {
                 var clusterIndex = clusterArray[d.tsync];
 
@@ -336,11 +349,27 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                         xLow: Number.POSITIVE_INFINITY, 
                         yLow: Number.POSITIVE_INFINITY,
                         cLength: 0,
+                        totalZoneList: [], //*****
+                        mostZone: "",      //*****
+                        secondZone: "",    //*****
                         time: []
                     };
                 }
 
                 var cluster = clusters[clusterIndex];
+
+                //cluster.totalZoneList = d3.map({labels, function(d) { return "Herp";}});
+                labeld = labels[d.x][d.y]; //*****
+                //if(cluster.totalZoneList[labeld].typeof(NaN)) {
+                //     cluster.totalZoneList[labeld] = 0;
+                //}
+                if(!(labeld in cluster.totalZoneList)) { //*****
+                    cluster.totalZoneList[labeld] = 1;    
+                }else{
+                    cluster.totalZoneList[labeld]++;
+                }
+
+                //console.log(cluster.totalZoneList);
 
                 if (cluster.xHigh < d.x) {
                     cluster.xHigh = d.x;
@@ -388,7 +417,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
 
 
         });
-
+        
         var avgPosListWinX = avgArray(posListWinX);
         var avgPosListWinY = avgArray(posListWinY);
  
@@ -418,11 +447,18 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
             });
             //cLength > 30 is actually checking whether teamfights take longer than 3 seconds. This is multiplied times 10 to compensate for the fact that there are 10 players.
             if (mean <= interTeamThreshold && cluster.cLength > 30) {
+                //console.log(cluster.totalZoneList); //*****
                 index++;
                 cluster.cIndex = index;
 
+                //console.log(cluster.totalZoneList);
+
                 cluster.xAvg = cluster.xSum / cluster.cLength;
                 cluster.yAvg = cluster.ySum / cluster.cLength;
+
+                cluster.mostZone = objKeyOfMaxValue(cluster.totalZoneList);
+                cluster.secondZone = getKeySecondToMax(cluster.totalZoneList,secondToMaxValue(cluster.totalZoneList));
+                //console.log (cluster.secondZone);
 
                 // 10 players, so divide by 10
                 cluster.cLength = cluster.cLength / 10;
@@ -462,11 +498,8 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                 newClusters.push(cluster);
             }
         });
-        
-        console.log(newClusters);
-        clusters = newClusters;
-        //console.log(clusters);
 
+        clusters = newClusters;
 
         h1.attr("class", "infoHeader")
             .text(Object.keys(clusters).length + " Team Fights");
@@ -523,6 +556,21 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                 })
             .on("mouseover", enlargeEllipseData)
             .on("mouseleave", shrinkEllipseData);
+
+            $('svg ellipse').tipsy({
+                gravity: 'w',
+                fade: true,
+                html: true,
+                offset: 5,
+                title: 
+                    function(d) { 
+                        var dat = this.__data__;
+                        var mostZone = dat.mostZone;
+                        var secondZone = dat.secondZone;
+
+                        return "This team fight was mainly fought in the following areas: " + "<h4>" + mostZone + "</h4>" + " and " + "<h4>" + secondZone + "</h4>" + "."; //*****
+                    }
+            });
     });
 }
 
@@ -599,6 +647,54 @@ var shrinkEllipseData = function() {
 /**
  * Utility Functions
  */
+
+//console.log(getKeySecondToMax({"car":1, "tree":5, "shoe":3}, secondToMaxValue({"car":1, "tree":5, "shoe":3}))); //*****
+
+function getKeySecondToMax(obj, value) { //*****
+    for (o in obj) {
+        if(obj.hasOwnProperty(o)) {
+            if (obj[o] === value) {
+                return o;
+            }
+        }
+    }
+}
+
+function secondToMaxValue(obj) { //*****
+    var max = -1;
+    var secondMax = -1;
+    for(o in obj) {
+        if(obj[o] > max) {
+            secondMax = max;
+            max = obj[o];
+        } else if (obj[o] > secondMax) {
+            secondMax = obj[o];
+        }
+    }
+    return secondMax;
+}
+
+function objKeyOfMaxValue(obj) { //*****
+    var max = -1;
+    var key = "";
+    for(o in obj){
+        if(obj[o] > max) {
+            max = obj[o];
+            key = o;
+        }
+    }
+    return key;
+}
+
+function create2DArray(rows) {
+  var arr = [];
+
+  for (var i=0;i<rows;i++) {
+     arr[i] = [];
+  }
+
+  return arr;
+}
 
 function eucl(x1, y1, x2, y2) {
     dx = Math.abs(x1-x2);
