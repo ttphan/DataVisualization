@@ -368,8 +368,8 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
                     return g;
                 }
             });
-
-            if (mean <= interTeamThreshold) {
+            //cLength > 30 is actually checking whether teamfights take longer than 3 seconds. This is multiplied times 10 to compensate for the fact that there are 10 players.
+            if (mean <= interTeamThreshold && cluster.cLength > 30) {
                 index++;
                 cluster.cIndex = index;
 
@@ -405,10 +405,11 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray) {
 
                 newClusters.push(cluster);
             }
-
         });
-
+        
+        console.log(newClusters);
         clusters = newClusters;
+        //console.log(clusters);
 
         h1.attr("class", "infoHeader")
             .text(Object.keys(clusters).length + " Team Fights");
@@ -562,6 +563,11 @@ function filterDD(arr) {
             }
         } 
         else {
+            // if (arr[i+filterLength]!=arr[i]+filterLength && arr[i-1] != arr[i]-1) {
+            //     for(var j = i; j < i+filterLength; j++) {
+            //         arr[j] = 0;
+            //     }
+            // }
             if (arr[i-1] != arr[i]-1 && arr[i+1] != arr[i]+1) {
                 arr[i] = 0;
             }
