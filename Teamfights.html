@@ -41,7 +41,7 @@
 
     #left {
         float: left;
-        width: 25%;
+        width: 26%;
         padding-left: 50px;
         padding-right: 50px;
     }
@@ -152,17 +152,11 @@ dropDownRight.on("change", menuChanged);
 
 loadDropDown("right", "All");
 
-function toggleTier(element) {
-    var tier = (element.value).split("-")[0];
-    var side = (element.value).split("-")[1];
 
-    loadDropDown(side, tier);
-}
 
 //Custom created `matches' file is read here. This is used for selecting matches in the application.
 function loadDropDown(side, tier) {
     d3.csv("scripts/deliverables/matches.csv",function(error, data) {
-        data.unshift(0);
 
         data.forEach(function(d) {
             d.match = +d.match;
@@ -177,6 +171,8 @@ function loadDropDown(side, tier) {
                 return d.Tier == tier;
             }
         );
+
+        dataFiltered.unshift(0);
 
         var options;
 
@@ -495,9 +491,15 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                 info.append("p")
                     .attr("class", "infoChildren")
                     .attr("id", function() { return "text-" + side + index})
-                    .text("Team Fight " + index + 
-                        " (" + minMin + ":" + minSec + " - " 
-                            + maxMin + ":" + maxSec + ")")
+                    .html(
+                        function(d) {
+                            return "<label><input type='checkbox' name='checkbox-" + side + "' value='" + side + "-" + index + "' checked autocomplete='off' onchange='toggleEllipse(this)'/>" +
+                            " Team Fight " + index + 
+                            " (" + minMin + ":" + minSec + " - " 
+                                + maxMin + ":" + maxSec + ")"
+                            +"</label>";
+                        }
+                    )
                     .style("color", 
                         function() {
                             if (side == "left") {
@@ -508,7 +510,8 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                         }
                     )
                     .on("mouseover", enlargeEllipseData)
-                    .on("mouseleave", shrinkEllipseData);
+                    .on("mouseleave", shrinkEllipseData)
+                    
 
                 newClusters.push(cluster);
             }
@@ -556,6 +559,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
 
                 return 0;
             })
+            .attr("display", "inline")
             .style("stroke-width", "5")
             .style("stroke",
                 function(c) {
@@ -579,6 +583,31 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
 /**
  * Utility Functions
  */
+
+ function toggleTier(element) {
+    var tier = (element.value).split("-")[0];
+    var side = (element.value).split("-")[1];
+
+    loadDropDown(side, tier);
+}
+
+function toggleEllipse(element) {
+    var side = (element.value).split("-")[0];
+    var index = (element.value).split("-")[1];
+    var display = element.checked ? "inline" : "none";
+
+    svg.selectAll("ellipse")
+        .filter(function(d) { 
+            if (side == d.side) {
+                return d.cIndex == index;
+            }
+
+            return false;
+        }
+        )
+        .attr("display", display);
+}
+
 var enlargeEllipseData = function() {
     var ellipseIndex = (this.id).split('-')[1];
     var text = d3.select("#text-" + ellipseIndex);
