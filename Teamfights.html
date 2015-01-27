@@ -17,6 +17,10 @@
         font: 10px sans-serif;
     }
 
+    select {
+        width:280px;
+    }
+
     .tfEllipse {
         opacity:0.3;
     }
@@ -32,7 +36,7 @@
     .dropDown {
         width: auto;
         overflow: hidden;
-        margin-top: 50px;
+        margin-top: 30px;
     }
 
     #left {
@@ -48,13 +52,14 @@
     }
 
 
-    .info {
+    .info, .tiers {
         color: white;
     }
 
     .hover {
         font-size: 20pt;
-    }
+    } 
+
 
 </style>
 
@@ -65,12 +70,31 @@
     <div id="svgArea"></div>
 
     <div class="dropDown" id="left">
+        <div class="tiers">
+            <fieldset>
+                <label><input type="radio" name="tierleft" value="All-left" checked autocomplete="off" onchange="toggleTier(this)"/> All</label>
+                <label><input type="radio" name="tierleft" value="Normal-left" autocomplete="off" onchange="toggleTier(this)"/> Normal</label>
+                <label><input type="radio" name="tierleft" value="High-left" autocomplete="off" onchange="toggleTier(this)"/> High</label>  
+                <label><input type="radio" name="tierleft" value="VeryHigh-left" autocomplete="off" onchange="toggleTier(this)"/> Very High</label>  
+                <label><input type="radio" name="tierleft" value="Pro-left" autocomplete="off" onchange="toggleTier(this)"/> Pro</label>  
+            </fieldset>
+        </div>
+        
         <div id="dropDownLeft"></div>
 
         <div class="info" id="infoleft"></div>
     </div>
 
     <div class="dropDown" id="right">
+        <div class="tiers">
+            <fieldset>
+                <label><input type="radio" name="tierright" value="All-right" checked autocomplete="off" onchange="toggleTier(this)"/> All</label>
+                <label><input type="radio" name="tierright" value="Normal-right" autocomplete="off" onchange="toggleTier(this)"/> Normal</label>
+                <label><input type="radio" name="tierright" value="High-right" autocomplete="off" onchange="toggleTier(this)"/> High</label>  
+                <label><input type="radio" name="tierright" value="VeryHigh-right" autocomplete="off" onchange="toggleTier(this)"/> Very High</label>  
+                <label><input type="radio" name="tierright" value="Pro-right" autocomplete="off" onchange="toggleTier(this)"/> Pro</label>  
+            </fieldset>
+        </div>
         <div id="dropDownRight"></div>
 
         <div class="info" id="inforight"></div>
@@ -78,7 +102,7 @@
 </div>
 
 <script src=D3/d3.js></script>
-<script src=jquery-2.1.0.min/jquery-2.1.0.min.js></script>
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.9.0.min.js"></script>
 <script src=lib/colorbrewer.js></script>
 
 <script>
@@ -118,8 +142,7 @@ var dropDownLeft = d3.select("#dropDownLeft").append("select")
 
 dropDownLeft.on("change", menuChanged);
 
-dropDownLeft.append("option")
-    .text("<SELECT A MATCH>");
+loadDropDown("left", "All");
 
 // Right menu 
 var dropDownRight = d3.select("#dropDownRight").append("select")
@@ -127,36 +150,65 @@ var dropDownRight = d3.select("#dropDownRight").append("select")
 
 dropDownRight.on("change", menuChanged);
 
-dropDownRight.append("option")
-    .text("<SELECT A MATCH>");
+loadDropDown("right", "All");
+
+function toggleTier(element) {
+    var tier = (element.value).split("-")[0];
+    var side = (element.value).split("-")[1];
+
+    loadDropDown(side, tier);
+}
 
 //Custom created `matches' file is read here. This is used for selecting matches in the application.
-d3.csv("scripts/deliverables/matches.csv",function(error, data) {
-    data.unshift(0);
+function loadDropDown(side, tier) {
+    d3.csv("scripts/deliverables/matches.csv",function(error, data) {
+        data.unshift(0);
 
-    data.forEach(function(d) {
-        d.match = +d.match;
-        d.Tier = d.Tier;
+        data.forEach(function(d) {
+            d.match = +d.match;
+            d.Tier = d.Tier;
+        });
+
+        var dataFiltered = data.filter(
+            function (d) {
+                if (tier == "All") {
+                    return true;
+                }
+                return d.Tier == tier;
+            }
+        );
+
+        var options;
+
+        if (side == "left") {
+            dropDownLeft.html("");
+
+            dropDownLeft.append("option")
+                .text("<SELECT A MATCH>");
+
+
+            options = dropDownLeft.selectAll("option")
+                        .data(dataFiltered)
+                        .enter()
+                        .append("option");
+        }
+        else {
+            dropDownRight.html("");
+
+            dropDownRight.append("option")
+                .text("<SELECT A MATCH>");
+
+            options = dropDownRight.selectAll("option")
+                        .data(dataFiltered)
+                        .enter()
+                        .append("option");
+        }
+
+        options.text(function (d) { return "Match id: " + d.match + ", tier: " + d.Tier; })
+           .attr("value", function (d) { return d.match; });
+
     });
-
-    var options = dropDownLeft.selectAll("option")
-                    .data(data)
-                    .enter()
-                    .append("option");
-
-    options.text(function (d) { return "Match id: " + d.match + ", tier: " + d.Tier; })
-       .attr("value", function (d) { return d.match; });
-
-    var options = dropDownRight.selectAll("option")
-                    .data(data)
-                    .enter()
-                    .append("option");
-
-    options.text(function (d) { return "Match id: " + d.match + ", tier: " + d.Tier; })
-       .attr("value", function (d) { return d.match; });
-});
-
-
+}
 
 //Loads the visualization for the match corresponding to matchID. Resets the image if a new match is selected.
 function getMatch(matchId, side) {
@@ -169,7 +221,6 @@ function reset(side) {
 
     var filteredEllipses = ellipses.filter(
         function(e) {
-            console.log(e.side);
             return (e.side).indexOf(side) > -1;
         });
 
@@ -463,9 +514,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
             }
         });
         
-        console.log(newClusters);
         clusters = newClusters;
-        //console.log(clusters);
 
 
         h1.attr("class", "infoHeader")
@@ -526,6 +575,10 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
     });
 }
 
+
+/**
+ * Utility Functions
+ */
 var enlargeEllipseData = function() {
     var ellipseIndex = (this.id).split('-')[1];
     var text = d3.select("#text-" + ellipseIndex);
@@ -595,10 +648,6 @@ var shrinkEllipseData = function() {
     text.classed('hover', false);  
 
 }
-
-/**
- * Utility Functions
- */
 
 function eucl(x1, y1, x2, y2) {
     dx = Math.abs(x1-x2);
