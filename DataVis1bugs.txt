@@ -4,3 +4,5 @@ Wel smallDDArray, geen interTeamDistArr:
 645153730
 
 OORZAAK: BEIDE TEAMS 'VERLIEZEN' (won = 0 voor alle spelers)
+
+644374912

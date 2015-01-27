@@ -301,6 +301,7 @@ function computeSmallDD(matchId, side) {
 
         computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side);
 
+
         function smallDDIntersect(arr1, arr2) {
             for (var i = 0; i < arr1.length; i++) {
                 for (var j = 0; j < arr2.length; j++) {
@@ -360,6 +361,8 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
 
     var posListLoseX = [];
     var posListLoseY = [];
+
+    var interTeamThreshold = 30;
 
     d3.csv("scripts/deliverables/match-" + matchId + "-zones.csv", function(error, data) {
 
@@ -470,6 +473,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
         var avgPosListLoseY = avgArray(posListLoseY);
 
 
+
         // Array containing distances between team fights by tsync.
         var interTeamDistArr = euclArray(avgPosListWinX, avgPosListWinY, avgPosListLoseX, avgPosListLoseY);
 
@@ -478,6 +482,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
         var h1 = d3.select("#info" + side);
 
         h1 = h1.append("h1");
+
 
         var index = 0;
         var newClusters = [];
