@@ -101,6 +101,8 @@
     </div>
 </div>
 
+<div id="brush"></div>
+
 <script src=D3/d3.js></script>
 <script type="text/javascript" src="https://code.jquery.com/jquery-1.9.0.min.js"></script>
 <script src=lib/colorbrewer.js></script>
@@ -110,6 +112,62 @@
 var margin = {top: 10, right: 10, bottom: 10, left: 10},
         width = 768,
         height = 768;
+
+var marginBrush = {top: 10, right: 15, bottom: 30, left: 15},
+    widthBrush = 768,
+    heightBrush = 50 - marginBrush.top - marginBrush.bottom;
+
+formatMinutes = function(d) { 
+    var minutes = Math.floor(d / 60),
+        seconds = d - (minutes * 60);
+    var output = seconds + 's';
+    if (minutes) {
+        output = minutes + 'm ' + output;
+    }
+
+    return output;
+};
+
+function brushstart() {
+  svg.classed("selecting", true);
+}
+
+function brushmove() {
+  var s = brush.extent();
+  circle.classed("selected", function(d) { return s[0] <= d && d <= s[1]; });
+}
+
+function brushend() {
+  svg.classed("selecting", !d3.event.target.empty());
+}
+
+var x = d3.scale.linear()
+  //.domain([0, 3600])
+  .range([0, width]);
+
+var brush = d3.svg.brush()
+    .x(x)
+    .extent([0, 1])
+    .on("brushstart", brushstart)
+    .on("brush", brushmove)
+    .on("brushend", brushend);
+
+var xAxis = d3.svg.axis()
+        .scale(x)
+        .orient("bottom")
+    .tickFormat(formatMinutes)
+    .tickValues(d3.range(0, 0, 600));
+
+var svgBrush = d3.select("#brush").append("svg")
+    .attr("width", widthBrush + marginBrush.left + marginBrush.right)
+    .attr("height", heightBrush + marginBrush.top + marginBrush.bottom)
+.append("g")
+    .attr("transform", "translate(" + marginBrush.left + "," + marginBrush.top + ")");
+
+svgBrush.append("g")
+    .attr("class", "x axis")
+    .attr("transform", "translate(0," + heightBrush + ")")
+    .call(xAxis);
 
 
 var svg = d3.select("#svgArea").append("svg")
@@ -125,7 +183,6 @@ var colors = colorbrewer.Set1[9]
 colors.splice(8,1);
 colors.splice(15,1);
 colors.splice(23,1);
-
 
 //Image of map is loaded here
 svg.append("svg:image")
