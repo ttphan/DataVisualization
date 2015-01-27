@@ -1,3 +1,6 @@
 bugs:
--Overlapping ellipses
--Column for match 1 doesn't look nice for Kevin's resolution
+-None! :D
+
+'bugs':
+-Dynamic area tooltips (>x% of fight in 1 area means only 1 area gets shown etc)
+-Resolution
