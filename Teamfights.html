@@ -52,7 +52,7 @@
     }
 
 
-    .info, .tiers {
+    h1, .tiers {
         color: white;
     }
 
@@ -65,7 +65,7 @@
 
 
 <body>
-
+<h1 style="text-align: center"> Team Fights Defense of the Ancients 2 </h1>
 <div id="wrapper">
     <div id="svgArea"></div>
 
@@ -531,7 +531,14 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
             .enter()
             .append("ellipse")
             .property("type", 0)
-            .attr("id", function(c) { ellipseIndex++; return "ellipse-" + side +(ellipseIndex); })
+            .on("mouseover", enlargeEllipseData)
+            .on("mouseleave", shrinkEllipseData)
+            .attr("id", 
+                function(c) { 
+                    ellipseIndex++; 
+                    return "ellipse-" + side + ellipseIndex; 
+                }
+            )
             .attr("cx",
                 function(c) {
                     return ((c.xAvg * 6) + 3) + 15;
@@ -552,19 +559,22 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                     return ((c.yHigh - c.yLow) / 2);
                 }
             )
-            .attr("fill-opacity", function(c) {
-                if (side == "left") {
-                    return 0.75;
-                }
-
-                return 0;
-            })
             .attr("display", "inline")
+            .style("fill-opacity", 
+                function(c) {
+                    if (side == "left") {
+                        return 0.75;
+                    }
+
+                    return 0;
+                }
+            )
+            .style("stroke-opacity", 0.75)
             .style("stroke-width", "5")
             .style("stroke",
                 function(c) {
                     if (side == "right") {
-                        return colors[colors.length - (c.cIndex)];
+                        return colors[colors.length - c.cIndex];
                     }
 
                     return "none";
@@ -573,9 +583,8 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
             .style("fill", 
                 function(c) {
                     return colors[c.cIndex - 1];
-                })
-            .on("mouseover", enlargeEllipseData)
-            .on("mouseleave", shrinkEllipseData);
+                }
+            );
     });
 }
 
