@@ -13,6 +13,8 @@ Highlights
 [x] Highlighting (+transitions)
 [] Tooltip at highlighted ellipse (or some other way of making clear which ellipse is selected)
 	[x] Tooltip
+prio 1	[] tooltip shown when hovering over text
 	things that could be shown in tooltip: 
 		[x] area where teamfight took place
-		[] teamfights that happened in other match during this teamfight
+prio 3		[] dynamic area tooltips
+prio 2		[] teamfights that happened in other match during this teamfight
