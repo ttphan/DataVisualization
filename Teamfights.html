@@ -60,6 +60,32 @@
         font-size: 20pt;
     } 
 
+    .selecting circle {
+        fill-opacity: .1;
+        stroke-opacity : .1;
+    }
+    .selecting circle.selected {
+      fill-opacity: 1;
+      stroke-opacity : 1;
+    }
+
+    .resize path {
+      fill: #666;
+      fill-opacity: .8;
+      stroke: #000;
+      stroke-width: 1.5px;
+    }
+
+    .axis path, .axis line {
+      fill: none;
+      stroke: #000;
+      shape-rendering: crispEdges;
+    }
+
+    .brush .extent {
+      fill-opacity: .125;
+      shape-rendering: crispEdges;
+    }
 
 </style>
 
@@ -113,9 +139,9 @@ var margin = {top: 10, right: 10, bottom: 10, left: 10},
         width = 768,
         height = 768;
 
-var marginBrush = {top: 10, right: 15, bottom: 30, left: 15},
-    widthBrush = 768,
-    heightBrush = 50 - marginBrush.top - marginBrush.bottom;
+var marginBrush = {top: 10, right: 15, bottom: 30, left: 20},
+    widthBrush = 778,
+    heightBrush = 75 - marginBrush.top - marginBrush.bottom;
 
 formatMinutes = function(d) { 
     var minutes = Math.floor(d / 60),
@@ -129,34 +155,61 @@ formatMinutes = function(d) {
 };
 
 function brushstart() {
-  svg.classed("selecting", true);
+    svgBrush.classed("selecting", true);
 }
 
 function brushmove() {
-  var s = brush.extent();
-  circle.classed("selected", function(d) { return s[0] <= d && d <= s[1]; });
+    var s = brush.extent();
+    var circles = svgBrush.selectAll("circle");
+    circles.classed("selected", 
+        function(c) { 
+            var mean = d3.mean(c.time);
+            var checkbox = $('#checkbox-' + c.side + c.cIndex);
+            var selected = true;
+
+            if (s[0] <= mean && mean <= s[1]) {
+                checkbox.prop("checked", true);
+            }
+            else {             
+                checkbox.prop("checked", false);
+                selected = false;
+            }
+
+            toggleEllipse(checkbox[0]);
+            return selected;
+        }
+    );
 }
 
 function brushend() {
-  svg.classed("selecting", !d3.event.target.empty());
+    svgBrush.classed("selecting", !d3.event.target.empty());
 }
 
+var maxleft = 0;
+var maxright = 0;
+
 var x = d3.scale.linear()
-  //.domain([0, 3600])
-  .range([0, width]);
+    .range([0, widthBrush])
+    .domain([0, 0]);
 
 var brush = d3.svg.brush()
     .x(x)
-    .extent([0, 1])
+    .extent([0, 0])
     .on("brushstart", brushstart)
     .on("brush", brushmove)
     .on("brushend", brushend);
+
+var arc = d3.svg.arc()
+    .outerRadius(heightBrush / 2)
+    .startAngle(0)
+    .endAngle(function(d, i) { return i ? -Math.PI : Math.PI; });
 
 var xAxis = d3.svg.axis()
         .scale(x)
         .orient("bottom")
     .tickFormat(formatMinutes)
-    .tickValues(d3.range(0, 0, 600));
+    .tickValues(d3.range(0, 3600, 300));
+
 
 var svgBrush = d3.select("#brush").append("svg")
     .attr("width", widthBrush + marginBrush.left + marginBrush.right)
@@ -165,9 +218,23 @@ var svgBrush = d3.select("#brush").append("svg")
     .attr("transform", "translate(" + marginBrush.left + "," + marginBrush.top + ")");
 
 svgBrush.append("g")
-    .attr("class", "x axis")
+    .attr("class", "x-axis")
     .attr("transform", "translate(0," + heightBrush + ")")
     .call(xAxis);
+
+var brushg = svgBrush.append("g")
+    .attr("class", "brush")
+    .call(brush);
+
+brushg.selectAll(".resize").append("path")
+    .attr("transform", "translate(0," +  heightBrush / 2 + ")")
+    .attr("d", arc);
+
+brushg.selectAll("rect")
+    .attr("height", heightBrush);
+
+brushstart();
+brushmove();
 
 
 var svg = d3.select("#svgArea").append("svg")
@@ -271,10 +338,16 @@ function getMatch(matchId, side) {
 // Removes the ellipses and team fight info.
 function reset(side) {
     var ellipses = svg.selectAll("ellipse");
+    var circles = svgBrush.selectAll("circle")
 
     var filteredEllipses = ellipses.filter(
         function(e) {
             return (e.side).indexOf(side) > -1;
+        });
+
+    var filteredCircles = circles.filter(
+        function(c) {
+            return (c.side).indexOf(side) > -1;
         });
 
     filteredEllipses
@@ -282,9 +355,14 @@ function reset(side) {
         .exit()
         .remove();
 
-        d3.selectAll("#info" + side + " .infoChildren").remove();
-        d3.selectAll("#info" + side + " .infoHeader").remove();
-        d3.selectAll("#info" + side + " br").remove();
+    filteredCircles
+        .data([])
+        .exit()
+        .remove();
+
+    d3.selectAll("#info" + side + " .infoChildren").remove();
+    d3.selectAll("#info" + side + " .infoHeader").remove();
+    d3.selectAll("#info" + side + " br").remove();
 
 }
 
@@ -543,6 +621,13 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                     maxSec = "" + 0 + maxSec;
                 }
 
+                if (side == "left") {
+                    maxleft = minmax[1];
+                }
+                else {
+                    maxright = minmax[1];
+                }
+
                 var info = d3.select("#info" + side);
                 
                 info.append("p")
@@ -550,7 +635,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                     .attr("id", function() { return "text-" + side + index})
                     .html(
                         function(d) {
-                            return "<label><input type='checkbox' name='checkbox-" + side + "' value='" + side + "-" + index + "' checked autocomplete='off' onchange='toggleEllipse(this)'/>" +
+                            return "<label><input id='checkbox-" + side + index + "' type='checkbox' name='checkbox-" + side + "' value='" + side + "-" + index + "' checked autocomplete='off' onchange='toggleEllipse(this)'/>" +
                             " Team Fight " + index + 
                             " (" + minMin + ":" + minSec + " - " 
                                 + maxMin + ":" + maxSec + ")"
@@ -576,13 +661,14 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
         
         clusters = newClusters;
 
+        resetBrush(side);
 
         h1.attr("class", "infoHeader")
             .text(Object.keys(clusters).length + " Team Fights");
 
         ellipseIndex = 0;
 
-        ellipse = svg.append("g")
+        svg.append("g")
             .selectAll("ellipse")
             .data(clusters)
             .enter()
@@ -642,6 +728,65 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                     return colors[c.cIndex - 1];
                 }
             );
+
+        function resetBrush() {
+            var max = maxleft;
+
+            if (maxleft < maxright) {
+                max = maxright;
+            }
+
+            x.domain([0, max]);
+            xAxis.tickValues(d3.range(0, max, 300));
+
+            svgBrush.selectAll("g.x-axis")
+                .call(xAxis);
+
+            brush.clear();
+            brush.extent([0, max]);
+            svgBrush.selectAll('.brush').call(brush);
+
+            svgBrush.append("g").selectAll("circle")
+                .data(clusters)
+            .enter().append("circle")
+                .attr("r", 3.5)
+                .style("stroke-width", "1")
+                .style("stroke",
+                    function(c) {
+                        if (side == "right") {
+                            return colors[colors.length - c.cIndex];
+                        }
+
+                        return "none";
+                    }
+                )
+                .style("fill",
+                    function(c) {
+                        if (side == "left") {
+                            return colors[c.cIndex - 1];
+                        }
+
+                        return "none"
+                    }
+                );
+
+            svgBrush.selectAll("circle")
+                .attr("transform", 
+                    function(c) { 
+                        var mean = d3.mean(c.time);
+                        var offset = 10;
+
+                        if (c.side == "right") {
+                            offset = 25;
+                        }
+
+                        return "translate(" + x(mean) + "," + offset + ")"; 
+                    }
+                )
+            brushstart();
+            brushmove();
+       
+        }
     });
 }
 
