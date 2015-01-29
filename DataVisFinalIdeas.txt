@@ -8,13 +8,14 @@ Visualization ideas
 Match drop-down menu
 [x] Sort matches by skill level
 [] Maybe a restyle that is  A. better for visualization?, B. better/easier to use, C. in the style of DotA2?
+[] Show match numbers somewhere (because if other radio button is clicked, it will say 'select match', and you
+                                                                         will no longer be able to see which match you're looking at)
 
 Highlights
 [x] Highlighting (+transitions)
 [] Tooltip at highlighted ellipse (or some other way of making clear which ellipse is selected)
 	[x] Tooltip
-prio 1	[] tooltip shown when hovering over text
+	[x] tooltip shown when hovering over text
 	things that could be shown in tooltip: 
 		[x] area where teamfight took place
-prio 3		[] dynamic area tooltips
-prio 2		[] teamfights that happened in other match during this teamfight
+prio		[] dynamic area tooltips

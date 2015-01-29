@@ -552,6 +552,32 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                     .on("mouseleave", shrinkEllipseData)
                     
 
+                $('.infoChildren').tipsy({
+                gravity: 'w',
+                fade: true,
+                html: true,
+                offset: 5,
+                title: 
+                    function(d) { 
+                        var dat = cluster;
+                        var tfNumber = dat.cIndex;
+                        var mostZone = dat.mostZone;
+                        var secondZone = dat.secondZone;
+                        var tfMinutes = Math.floor(dat.cLength / 60);
+                        var tfSeconds = dat.cLength % 60;
+                        var matchNumber;
+                        if(side == "left") {
+                            matchNumber = 1;
+                        }
+                        else{
+                            matchNumber = 2;
+                        }
+
+                        return "Team fight " + tfNumber + " (match "+ matchNumber +")" + " was mainly fought in the following areas: " + "<h4>" + mostZone + "</h4>" + " and " + "<h4>" + secondZone + "</h4>" + 
+                        "This team fight took " + tfMinutes + " minutes and " + tfSeconds + " seconds." //*****
+                    }
+                });
+
                 newClusters.push(cluster);
             }
         });
@@ -633,10 +659,22 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                 title: 
                     function(d) { 
                         var dat = this.__data__;
+                        var tfNumber = dat.cIndex;
                         var mostZone = dat.mostZone;
                         var secondZone = dat.secondZone;
+                        var tfMinutes = Math.floor(dat.cLength / 60);
+                        var tfSeconds = dat.cLength % 60;
+                        var matchNumber;
+                        if(side == "left") {
+                            matchNumber = 1;
+                        }
+                        else{
+                            matchNumber = 2;
+                        }
+                        
 
-                        return "This team fight was mainly fought in the following areas: " + "<h4>" + mostZone + "</h4>" + " and " + "<h4>" + secondZone + "</h4>" + "."; //*****
+                        return "Team fight " + tfNumber + " (match "+ matchNumber +")" + " was mainly fought in the following areas: " + "<h4>" + mostZone + "</h4>" + " and " + "<h4>" + secondZone + "</h4>" + 
+                        "This team fight took " + tfMinutes + " minutes and " + tfSeconds + " seconds." //*****
                     }
             });
 
