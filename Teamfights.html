@@ -62,11 +62,11 @@
         font-style: oblique;
     } 
 
-    .selecting circle {
+    .selecting .rects rect {
         fill-opacity: .1;
         stroke-opacity : .1;
     }
-    .selecting circle.selected {
+    .selecting .rects rect.selected {
       fill-opacity: 1;
       stroke-opacity : 1;
     }
@@ -140,54 +140,34 @@ var margin = {top: 10, right: 10, bottom: 10, left: 10},
         width = 768,
         height = 768;
 
+var svg = d3.select("#svgArea").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom);
+
+var colors = colorbrewer.Set1[9]
+            .concat(colorbrewer.Set2[8])
+            .concat(colorbrewer.Set3[12]); 
+
+var labels = create2DArray(124);
+d3.csv("data/Dota-Labels.csv", function(error, data) { 
+    var zoneLabels = create2DArray(124);
+    data.forEach(function(d) {
+        d.x = +d.x;
+        d.y = +d.y;
+        d.SectionLabel = d.SectionLabel;
+        zoneLabels[d.x][d.y] = d.SectionLabel;
+    });
+    labels = zoneLabels;
+});
+
+
+// Brush section
+var maxleft = 0;
+var maxright = 0;
+
 var marginBrush = {top: 10, right: 15, bottom: 30, left: 20},
     widthBrush = 778,
     heightBrush = 75 - marginBrush.top - marginBrush.bottom;
-
-formatMinutes = function(d) { 
-    var minutes = Math.floor(d / 60),
-        seconds = d - (minutes * 60);
-    var output = seconds + 's';
-    if (minutes) {
-        output = minutes + 'm ' + output;
-    }
-
-    return output;
-};
-
-function brushstart() {
-    svgBrush.classed("selecting", true);
-}
-
-function brushmove() {
-    var s = brush.extent();
-    var circles = svgBrush.selectAll("circle");
-    circles.classed("selected", 
-        function(c) { 
-            var mean = d3.mean(c.time);
-            var checkbox = $('#checkbox-' + c.side + c.cIndex);
-            var selected = true;
-
-            if (s[0] <= mean && mean <= s[1]) {
-                checkbox.prop("checked", true);
-            }
-            else {             
-                checkbox.prop("checked", false);
-                selected = false;
-            }
-
-            toggleEllipse(checkbox[0]);
-            return selected;
-        }
-    );
-}
-
-function brushend() {
-    svgBrush.classed("selecting", !d3.event.target.empty());
-}
-
-var maxleft = 0;
-var maxright = 0;
 
 var x = d3.scale.linear()
     .range([0, widthBrush])
@@ -208,9 +188,20 @@ var arc = d3.svg.arc()
 var xAxis = d3.svg.axis()
         .scale(x)
         .orient("bottom")
-    .tickFormat(formatMinutes)
-    .tickValues(d3.range(0, 3600, 300));
+    .tickFormat(
+        function(d) {
+            var time = computeTime(d);
+            var output = "";
 
+            if (time[0] > 0) {
+                output = output + time[0] + "m ";
+            }
+
+            output = output + time[1] + "s";
+
+            return output;
+        })
+    .tickValues(d3.range(0, 3600, 300));
 
 var svgBrush = d3.select("#brush").append("svg")
     .attr("width", widthBrush + marginBrush.left + marginBrush.right)
@@ -237,29 +228,7 @@ brushg.selectAll("rect")
 brushstart();
 brushmove();
 
-
-var svg = d3.select("#svgArea").append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom);
-
-var colors = colorbrewer.Set1[9]
-            .concat(colorbrewer.Set2[8])
-            .concat(colorbrewer.Set3[12]); 
-
-var labels = create2DArray(124);
-d3.csv("data/Dota-Labels.csv", function(error, data) { 
-    var zoneLabels = create2DArray(124);
-    data.forEach(function(d) {
-        d.x = +d.x;
-        d.y = +d.y;
-        d.SectionLabel = d.SectionLabel;
-        zoneLabels[d.x][d.y] = d.SectionLabel;
-        console.log(zoneLabels[d.x][d.y]);
-    });
-    labels = zoneLabels;
-});
-
-//Remove gray colors from color sets
+//Remove gray colors from color sets to not collide with gray ellipses when another ellipse is hovered over
 colors.splice(8,1);
 colors.splice(15,1);
 colors.splice(23,1);
@@ -311,30 +280,21 @@ function loadDropDown(side, tier) {
         dataFiltered.unshift(0);
 
         var options;
+        var dropDown = dropDownLeft;
 
-        if (side == "left") {
-            dropDownLeft.html("");
-
-            dropDownLeft.append("option")
-                .text("<SELECT A MATCH>");
-
-
-            options = dropDownLeft.selectAll("option")
-                        .data(dataFiltered)
-                        .enter()
-                        .append("option");
+        if (side == "right") {
+            dropDown = dropDownRight
         }
-        else {
-            dropDownRight.html("");
 
-            dropDownRight.append("option")
-                .text("<SELECT A MATCH>");
+        dropDown.html("");
 
-            options = dropDownRight.selectAll("option")
-                        .data(dataFiltered)
-                        .enter()
-                        .append("option");
-        }
+        dropDown.append("option")
+            .text("<SELECT A MATCH>");
+
+        options = dropDown.selectAll("option")
+                    .data(dataFiltered)
+                    .enter()
+                    .append("option");
 
         options.text(function (d) { return "Match id: " + d.match + ", tier: " + d.Tier; })
            .attr("value", function (d) { return d.match; });
@@ -350,14 +310,14 @@ function getMatch(matchId, side) {
 // Removes the ellipses and team fight info.
 function reset(side) {
     var ellipses = svg.selectAll("ellipse");
-    var circles = svgBrush.selectAll("circle")
+    var rects = svgBrush.selectAll(".rects").selectAll("rect");
 
     var filteredEllipses = ellipses.filter(
         function(e) {
             return (e.side).indexOf(side) > -1;
         });
 
-    var filteredCircles = circles.filter(
+    var filteredRects = rects.filter(
         function(c) {
             return (c.side).indexOf(side) > -1;
         });
@@ -367,7 +327,7 @@ function reset(side) {
         .exit()
         .remove();
 
-    filteredCircles
+    filteredRects
         .data([])
         .exit()
         .remove();
@@ -375,6 +335,7 @@ function reset(side) {
     d3.selectAll("#info" + side + " .infoChildren").remove();
     d3.selectAll("#info" + side + " .infoHeader").remove();
     d3.selectAll("#info" + side + " br").remove();
+    d3.selectAll(".endline").remove();
 
 }
 
@@ -481,15 +442,7 @@ function defineClusters(arr) {
  * draws the ellipses
  */
 function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
-    var matchTime;
-    var winTeamPlayers = [];
-    var loseTeamPlayers = [];
-
-    var xPosWin = 0;
-    var yPosWin = 0;
-
-    var xPosLose = 0;
-    var yPosLose = 0;
+    var matchTime = 0;
 
     var posListWinX = [];
     var posListWinY = [];
@@ -522,6 +475,10 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                 winner = d.team;
             }
 
+            if (matchTime < d.tsync) {
+                matchTime = d.tsync;
+            }
+
             if (smallDDArray.indexOf(d.tsync)!=-1) {
                 var clusterIndex = clusterArray[d.tsync];
 
@@ -549,10 +506,18 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
 
                 var cluster = clusters[clusterIndex];
 
-                //console.log(labels[d.x][d.y]);
+
+                //Fix labels index out-of-bounds problems
+                if (d.x > 123) {
+                    d.x = 123;
+                } else if (d.x < 0) {
+                    d.x = 0
+                }
+
+                //Get area label for each coordinate
                 labeld = labels[d.x][d.y];
 
-                if(!(labeld in cluster.totalZoneList)) {
+                if (!(labeld in cluster.totalZoneList)) {
                     cluster.totalZoneList[labeld] = 1;    
                 }else{
                     cluster.totalZoneList[labeld]++;
@@ -610,24 +575,28 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
         var avgPosListLoseX = avgArray(posListLoseX);
         var avgPosListLoseY = avgArray(posListLoseY);
 
-
-
         // Array containing distances between team fights by tsync.
         var interTeamDistArr = euclArray(avgPosListWinX, avgPosListWinY, avgPosListLoseX, avgPosListLoseY);
 
         var interTeamThreshold = 30;
 
-        var h1 = d3.select("#info" + side);
+        var headers = d3.select("#info" + side);
 
-        var teamfightHeader = h1.append("h1");
+        var teamfightHeader = headers.append("h1");
 
-        h1.append("h4")
+        headers.append("h4")
             .attr("class", "infoHeader")
             .text("Match id: " + matchId);
 
-        h1.append("h4")
+        headers.append("h4")
             .attr("class", "infoHeader")
             .text("Winner: " + winner);
+
+        var matchTimeArray = computeTime(matchTime);
+
+        headers.append("h4")
+            .attr("class", "infoHeader")
+            .text("End time: " + matchTimeArray[0] + ":" + matchTimeArray[1]);
 
 
         var index = 0;
@@ -641,51 +610,37 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                     return g;
                 }
             });
+
             //cLength > 30 is actually checking whether teamfights take longer than 3 seconds. This is multiplied times 10 to compensate for the fact that there are 10 players.
             if (mean <= interTeamThreshold && cluster.cLength > 30) {
                 index++;
                 cluster.cIndex = index;
-
 
                 cluster.xAvg = cluster.xSum / cluster.cLength;
                 cluster.yAvg = cluster.ySum / cluster.cLength;
 
                 cluster.mostZone = objKeyOfMaxValue(cluster.totalZoneList);
                 cluster.mostZoneLength = objMaxValue(cluster.totalZoneList);//*****
+
                 cluster.secondZone = getKeySecondToMax(cluster.totalZoneList,secondToMaxValue(cluster.totalZoneList));
                 cluster.secondZoneLength = secondToMaxValue(cluster.totalZoneList);//*****
-
-                console.log(cluster.totalZoneList); //*****
-                //console.log(cluster.cLength);
-                console.log("Most Zone Length: " + Math.floor(cluster.mostZoneLength*10 / cluster.cLength)); //*****
 
                 // 10 players, so divide by 10
                 cluster.cLength = cluster.cLength / 10;
 
-                 //*****
-                //console.log("Second most zone length: " + Math.floor(cluster.secondZoneLength / cluster.cLength))
-
-                var minMin = Math.floor(minmax[0] / 60);
-                var minSec = minmax[0] % 60;
-                if (minSec < 10) {
-                    minSec = "" + 0 + minSec;
-                }
-
-                var maxMin = Math.floor(minmax[1] / 60);
-                var maxSec = minmax[1] % 60;
-                if (maxSec < 10) {
-                    maxSec = "" + 0 + maxSec;
-                }
+                var start = computeTime(minmax[0]);
+                var end = computeTime(minmax[1]);
 
                 if (side == "left") {
-                    maxleft = minmax[1];
+                    maxleft = matchTime;
                 }
                 else {
-                    maxright = minmax[1];
+                    maxright = matchTime;
                 }
 
                 var info = d3.select("#info" + side);
                 
+                // Checkboxes
                 info.append("p")
                     .attr("class", "infoChildren")
                     .attr("id", function() { return "text-" + side + index})
@@ -693,8 +648,8 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                         function() {
                             return "<label><input id='checkbox-" + side + index + "' type='checkbox' name='checkbox-" + side + "' value='" + side + "-" + index + "' checked autocomplete='off' onchange='toggleEllipse(this)'/>" +
                             " Team Fight " + index + 
-                            " (" + minMin + ":" + minSec + " - " 
-                                + maxMin + ":" + maxSec + ")"
+                            " (" + start[0] + ":" + start[1] + " - " 
+                                + end[0] + ":" + end[1] + ")"
                             +"</label>";
                         }
                     )
@@ -710,26 +665,34 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                     .on("mouseover", enlargeEllipseData)
                     .on("mouseleave", shrinkEllipseData)
                     
-
+                // Tooltips on text
                 $('.infoChildren').tipsy({
-                gravity: 
-                    function() {
-                        if (side == "left") {
-                            return "w";
-                        }
-                        else {
-                            return "e";
-                        }
-                    },
-                fade: true,
-                html: true,
-                offset: 5,
-                title: 
+                    gravity: 
+                        function() {
+                            if (side == "left") {
+                                return "w";
+                            }
+                            else {
+                                return "e";
+                            }
+                        },
+                    fade: true,
+                    html: true,
+                    offset: 5,
+                    title: 
                     function() { 
                         var dat = cluster;
                         var tfNumber = dat.cIndex;
+
+                        var cLength = dat.cLength * 10;
                         var mostZone = dat.mostZone;
+                        var mostZoneLength = dat.mostZoneLength
                         var secondZone = dat.secondZone;
+
+                        if(mostZoneLength / cLength > 0.6) {
+                            secondZone = 0;
+                        }
+
                         var tfMinutes = Math.floor(dat.cLength / 60);
                         var tfSeconds = Math.floor(dat.cLength % 60);
                         var matchNumber;
@@ -740,10 +703,60 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                             matchNumber = 2;
                         }
 
+                        if(secondZone!=0) {
                         return "Team fight " + tfNumber + " (match "+ matchNumber +")" + " was mainly fought in the following areas: " + "<h4>" + mostZone + "</h4>" + " and " + "<h4>" + secondZone + "</h4>" + 
                         "This team fight took " + tfMinutes + " minutes and " + tfSeconds + " seconds."
+                        }
+                        else {
+                            return "Team fight " + tfNumber + " (match "+ matchNumber +")" + " was mainly fought in the following area: " + "<h4>" + mostZone + "</h4>" + 
+                            "This team fight took " + tfMinutes + " minutes and " + tfSeconds + " seconds."
+                        }
                     }
                 });
+                
+                
+                var rects = svgBrush.selectAll(".rects").selectAll("rect"); //*****
+
+                $(rects).tipsy({
+                    gravity: 's',
+                    fade: true,
+                    html: true,
+                    offset: 5,
+                    title: 
+                    function(d) { 
+                        var dat = cluster;
+                        var tfNumber = dat.cIndex;
+
+                        var cLength = dat.cLength * 10;
+                        var mostZone = dat.mostZone;
+                        var mostZoneLength = dat.mostZoneLength
+                        var secondZone = dat.secondZone;
+
+                        if(mostZoneLength / cLength > 0.6) {
+                            secondZone = 0;
+                        }
+
+                        var tfMinutes = Math.floor(dat.cLength / 60);
+                        var tfSeconds = Math.floor(dat.cLength % 60);
+                        var matchNumber;
+                        if(side == "left") {
+                            matchNumber = 1;
+                        }
+                        else {
+                            matchNumber = 2;
+                        }
+                        
+                        if(secondZone!=0) {
+                            return "Team fight " + tfNumber + " (match "+ matchNumber +")" + " was mainly fought in the following areas: " + "<h4>" + mostZone + "</h4>" + " and " + "<h4>" + secondZone + "</h4>" + 
+                            "This team fight took " + tfMinutes + " minutes and " + tfSeconds + " seconds."
+                        }
+                        else {
+                            return "Team fight " + tfNumber + " (match "+ matchNumber +")" + " was mainly fought in the following area: " + "<h4>" + mostZone + "</h4>" + 
+                            "This team fight took " + tfMinutes + " minutes and " + tfSeconds + " seconds."
+                        }
+                    }
+                });
+                
 
                 newClusters.push(cluster);
             }
@@ -752,8 +765,8 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
 
         clusters = newClusters;
 
+        // Reset and redraw the brush and rectangles
         resetBrush(side);
-
 
         teamfightHeader.attr("class", "infoHeader")
             .text(Object.keys(clusters).length + " Team Fights");
@@ -821,6 +834,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
             .on("mouseover", enlargeEllipseData)
             .on("mouseleave", shrinkEllipseData);
 
+        // Tooltips on ellipses
         $('svg ellipse').tipsy({
             gravity: 'w',
             fade: true,
@@ -830,81 +844,132 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                 function(d) { 
                     var dat = this.__data__;
                     var tfNumber = dat.cIndex;
+
+                    var cLength = dat.cLength * 10;
                     var mostZone = dat.mostZone;
+                    var mostZoneLength = dat.mostZoneLength
                     var secondZone = dat.secondZone;
+
+                    if(mostZoneLength / cLength > 0.6) {
+                        secondZone = 0;
+                    }
+
                     var tfMinutes = Math.floor(dat.cLength / 60);
                     var tfSeconds = Math.floor(dat.cLength % 60);
                     var matchNumber;
                     if(side == "left") {
                         matchNumber = 1;
                     }
-                    else{
+                    else {
                         matchNumber = 2;
                     }
                     
-
-                    return "Team fight " + tfNumber + " (match "+ matchNumber +")" + " was mainly fought in the following areas: " + "<h4>" + mostZone + "</h4>" + " and " + "<h4>" + secondZone + "</h4>" + 
-                    "This team fight took " + tfMinutes + " minutes and " + tfSeconds + " seconds."
+                    if(secondZone!=0) {
+                        return "Team fight " + tfNumber + " (match "+ matchNumber +")" + " was mainly fought in the following areas: " + "<h4>" + mostZone + "</h4>" + " and " + "<h4>" + secondZone + "</h4>" + 
+                        "This team fight took " + tfMinutes + " minutes and " + tfSeconds + " seconds."
+                    }
+                    else {
+                        return "Team fight " + tfNumber + " (match "+ matchNumber +")" + " was mainly fought in the following area: " + "<h4>" + mostZone + "</h4>" + 
+                        "This team fight took " + tfMinutes + " minutes and " + tfSeconds + " seconds."
+                    }
                 }
         });
 
         function resetBrush() {
-        var max = maxleft;
+            // Resize the brush scale
+            var max = d3.max([maxleft, maxright]);
 
-        if (maxleft < maxright) {
-            max = maxright;
-        }
+            x.domain([0, max]);
+            xAxis.tickValues(d3.range(0, max, 300));
 
-        x.domain([0, max]);
-        xAxis.tickValues(d3.range(0, max, 300));
+            svgBrush.selectAll("g.x-axis")
+                .call(xAxis);
 
-        svgBrush.selectAll("g.x-axis")
-            .call(xAxis);
+            // Redraw brush
+            brush.clear();
+            brush.extent([0, max]); 
+            svgBrush.selectAll('.brush').call(brush);
 
-        brush.clear();
-        brush.extent([0, max]);
-        svgBrush.selectAll('.brush').call(brush);
+            // Resize existing rectangles to match the new scale
+            svgBrush.selectAll(".rects").selectAll("rect")
+                .attr("width",
+                    function(c) {
+                        var extents = d3.extent(c.time);
 
-        svgBrush.append("g").selectAll("circle")
-            .data(clusters)
-        .enter().append("circle")
-            .attr("r", 3.5)
-            .style("stroke-width", "1")
-            .style("stroke",
-                function(c) {
-                    if (side == "right") {
-                        return colors[colors.length - c.cIndex];
+                        return x(extents[1] - extents[0]);
                     }
+                )
 
-                    return "none";
-                }
-            )
-            .style("fill",
-                function(c) {
-                    if (side == "left") {
-                        return colors[c.cIndex - 1];
+            // Draw the new rectangles
+            svgBrush.append("g").classed("rects", true).selectAll("rect")
+                .data(clusters)
+            .enter().append("rect")
+                .attr("width",
+                    function(c) {
+                        var extents = d3.extent(c.time);
+
+                        return x(extents[1] - extents[0]);
                     }
+                )
+                .attr("height", 5)
+                .attr("rx", 2)
+                .attr("ry", 2)
+                .style("stroke-width", "1")
+                .style("stroke",
+                    function(c) {
+                        if (side == "right") {
+                            return colors[colors.length - c.cIndex];
+                        }
 
-                    return "none"
-                }
-            );
+                        return "none";
+                    }
+                )
+                .style("fill",
+                    function(c) {
+                        if (side == "left") {
+                            return colors[c.cIndex - 1];
+                        }
 
-            svgBrush.selectAll("circle")
+                        return "none"
+                    }
+                );
+
+            // Draws the end line
+            if (d3.min([maxleft, maxright]) > 0) {
+                svgBrush.append("g").classed("endline", true).selectAll("line")
+                    .data([d3.min([maxleft, maxright])])
+                .enter().append("line")
+                    .attr("x1", 
+                        function(d) {
+                            return x(d);
+                        }
+                    )
+                    .attr("x2", 
+                        function(d) {
+                            return x(d);
+                        }
+                    )
+                    .attr("y1", 0)
+                    .attr("y2", heightBrush)
+                    .attr("stroke-width", 2)
+                    .attr("stroke", "white");
+            }
+
+            // Transform x position
+            svgBrush.selectAll(".rects").selectAll("rect")
                 .attr("transform", 
                     function(c) { 
-                        var mean = d3.mean(c.time);
                         var offset = 10;
 
                         if (c.side == "right") {
                             offset = 25;
                         }
 
-                        return "translate(" + x(mean) + "," + offset + ")"; 
+                        return "translate(" + x(d3.extent(c.time)[0]) + "," + offset + ")"; 
                     }
                 )
-            brushstart();
+
             brushmove();
-       
         }        
     });
 }
@@ -912,6 +977,55 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
 /**
  * Utility Functions
  */
+
+/**
+ * Computes the start and end times based on the extends, 
+ * returns the minutes and seconds of both start and end times.
+ */
+function computeTime(time) {
+    var result = [];
+
+    result[0] = Math.floor(time / 60);
+    result[1] = time % 60;
+    if (result[1] < 10) {
+        result[1] = "" + 0 + result[1];
+    }
+
+    return result;
+}
+
+function brushstart() {
+    svgBrush.classed("selecting", true);
+}
+
+function brushmove() {
+    var s = brush.extent();
+    var rects = svgBrush.selectAll(".rects").selectAll("rect");
+
+    rects.classed("selected", 
+        function(c) { 
+            var extents = d3.extent(c.time);
+            var checkbox = $('#checkbox-' + c.side + c.cIndex);
+            var selected = true;
+
+            // +1 to take into account the very last team fight
+            if (s[0] <= extents[0] && extents[1] <= s[1] + 1) {
+                checkbox.prop("checked", true);
+            }
+            else {             
+                checkbox.prop("checked", false);
+                selected = false;
+            }
+
+            toggleEllipse(checkbox[0]);
+            return selected;
+        }
+    );
+}
+
+function brushend() {
+    svgBrush.classed("selecting", !d3.event.target.empty());
+}
 
  function toggleTier(element) {
     var tier = (element.value).split("-")[0];
@@ -1006,11 +1120,6 @@ var shrinkEllipseData = function() {
 
 }
 
-/**
- * Utility Functions
- */
-
-
 function getKeySecondToMax(obj, value) { 
     for (o in obj) {
         if(obj.hasOwnProperty(o)) {
@@ -1033,6 +1142,14 @@ function secondToMaxValue(obj) {
         }
     }
     return secondMax;
+}
+
+function objTotalValue(obj) { //*****
+    var total = 0;
+    for(o in obj) {
+        total += obj[o];
+    }
+    return total;
 }
 
 function objKeyOfMaxValue(obj) { 
