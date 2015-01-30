@@ -5,6 +5,11 @@ Visualization ideas
 
 [x] Compare matches
 
+Brush
+[x] Sexy brush with full functionality
+[] End time of shortest match as a vertical line
+[] Bar instead of circles
+
 Match drop-down menu
 [x] Sort matches by skill level
 [] Maybe a restyle that is  A. better for visualization?, B. better/easier to use, C. in the style of DotA2?

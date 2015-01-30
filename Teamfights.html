@@ -254,6 +254,7 @@ d3.csv("data/Dota-Labels.csv", function(error, data) {
         d.y = +d.y;
         d.SectionLabel = d.SectionLabel;
         zoneLabels[d.x][d.y] = d.SectionLabel;
+        console.log(zoneLabels[d.x][d.y]);
     });
     labels = zoneLabels;
 });
@@ -539,14 +540,16 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                         cLength: 0,
                         totalZoneList: [],
                         mostZone: "",
+                        mostZoneLength: 0, //*****
                         secondZone: "",
+                        secondZoneLength: 0, //*****
                         time: []
                     };
                 }
 
                 var cluster = clusters[clusterIndex];
 
-
+                //console.log(labels[d.x][d.y]);
                 labeld = labels[d.x][d.y];
 
                 if(!(labeld in cluster.totalZoneList)) {
@@ -648,10 +651,19 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                 cluster.yAvg = cluster.ySum / cluster.cLength;
 
                 cluster.mostZone = objKeyOfMaxValue(cluster.totalZoneList);
+                cluster.mostZoneLength = objMaxValue(cluster.totalZoneList);//*****
                 cluster.secondZone = getKeySecondToMax(cluster.totalZoneList,secondToMaxValue(cluster.totalZoneList));
+                cluster.secondZoneLength = secondToMaxValue(cluster.totalZoneList);//*****
+
+                console.log(cluster.totalZoneList); //*****
+                //console.log(cluster.cLength);
+                console.log("Most Zone Length: " + Math.floor(cluster.mostZoneLength*10 / cluster.cLength)); //*****
 
                 // 10 players, so divide by 10
                 cluster.cLength = cluster.cLength / 10;
+
+                 //*****
+                //console.log("Second most zone length: " + Math.floor(cluster.secondZoneLength / cluster.cLength))
 
                 var minMin = Math.floor(minmax[0] / 60);
                 var minSec = minmax[0] % 60;
@@ -1033,6 +1045,16 @@ function objKeyOfMaxValue(obj) {
         }
     }
     return key;
+}
+
+function objMaxValue(obj) { 
+    var max = -1;
+    for(o in obj){
+        if(obj[o] > max) {
+            max = obj[o];
+        }
+    }
+    return max;
 }
 
 function create2DArray(rows) {
