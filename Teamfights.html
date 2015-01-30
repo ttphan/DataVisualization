@@ -820,15 +820,15 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                 max = maxright;
             }
 
-            x.domain([0, matchTime]);
-            xAxis.tickValues(d3.range(0, matchTime, 300));
+            x.domain([0, max]);
+            xAxis.tickValues(d3.range(0, max, 300));
 
             svgBrush.selectAll("g.x-axis")
                 .call(xAxis);
 
             // Redraw brush
             brush.clear();
-            brush.extent([0, matchTime]);
+            brush.extent([0, max]);
             svgBrush.selectAll('.brush').call(brush);
 
             // Resize existing rectangles to match the new scale
