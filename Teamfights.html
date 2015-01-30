@@ -146,8 +146,14 @@ var svg = d3.select("#svgArea").append("svg")
 
 var colors = colorbrewer.Set1[9]
             .concat(colorbrewer.Set2[8])
-            .concat(colorbrewer.Set3[12]); 
+            .concat(colorbrewer.Set3[12]);
 
+// Remove gray colors from color sets to not collide with gray ellipses when another ellipse is hovered over
+colors.splice(25,1);
+colors.splice(16,1);
+colors.splice(8,1);
+
+// Make a matrix with labels of (x,y)-coordinates
 var labels = create2DArray(124);
 d3.csv("data/Dota-Labels.csv", function(error, data) { 
     var zoneLabels = create2DArray(124);
@@ -159,7 +165,6 @@ d3.csv("data/Dota-Labels.csv", function(error, data) {
     });
     labels = zoneLabels;
 });
-
 
 // Brush section
 var maxleft = 0;
@@ -228,12 +233,7 @@ brushg.selectAll("rect")
 brushstart();
 brushmove();
 
-//Remove gray colors from color sets to not collide with gray ellipses when another ellipse is hovered over
-colors.splice(8,1);
-colors.splice(15,1);
-colors.splice(23,1);
-
-//Image of map is loaded here
+// Image of map is loaded here
 svg.append("svg:image")
         .attr("x", margin.left)
         .attr("y", margin.top)
@@ -259,7 +259,7 @@ loadDropDown("right", "All");
 
 
 
-//Custom created `matches' file is read here. This is used for selecting matches in the application.
+// Custom created `matches' file is read here. This is used for selecting matches in the application.
 function loadDropDown(side, tier) {
     d3.csv("scripts/deliverables/matches.csv",function(error, data) {
 

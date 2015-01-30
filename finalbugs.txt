@@ -1,6 +1,9 @@
 bugs:
--None! :D
+[fixed] 621885923 and 623384981 give labels[d.x] errors, should probably remove these.
+	Solution: sometimes d.x would be out of bounds (d.x < 0 or d.x > 123)
+
+- 636476209 has no teamfights
 
 'bugs':
--Dynamic area tooltips (>x% of fight in 1 area means only 1 area gets shown etc)
--Resolution
+[fixed]Resolution
+-g element created for every new match
