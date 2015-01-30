@@ -335,6 +335,7 @@ function reset(side) {
     d3.selectAll("#info" + side + " .infoChildren").remove();
     d3.selectAll("#info" + side + " .infoHeader").remove();
     d3.selectAll("#info" + side + " br").remove();
+    d3.selectAll(".endline").remove();
 
 }
 
@@ -795,11 +796,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
 
         function resetBrush() {
             // Resize the brush scale
-            var max = maxleft;
-
-            if (maxleft < maxright) {
-                max = maxright;
-            }
+            var max = d3.max([maxleft, maxright]);
 
             x.domain([0, max]);
             xAxis.tickValues(d3.range(0, max, 300));
@@ -855,6 +852,27 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                         return "none"
                     }
                 );
+
+            // Draws the end line
+            if (d3.min([maxleft, maxright]) > 0) {
+                svgBrush.append("g").classed("endline", true).selectAll("line")
+                    .data([d3.min([maxleft, maxright])])
+                .enter().append("line")
+                    .attr("x1", 
+                        function(d) {
+                            return x(d);
+                        }
+                    )
+                    .attr("x2", 
+                        function(d) {
+                            return x(d);
+                        }
+                    )
+                    .attr("y1", 0)
+                    .attr("y2", heightBrush)
+                    .attr("stroke-width", 2)
+                    .attr("stroke", "red");
+            }
 
             // Transform x position
             svgBrush.selectAll(".rects").selectAll("rect")
