@@ -169,18 +169,6 @@ var marginBrush = {top: 10, right: 15, bottom: 30, left: 20},
     widthBrush = 778,
     heightBrush = 75 - marginBrush.top - marginBrush.bottom;
 
-// Format seconds to mm:ss format
-formatMinutes = function(d) { 
-    var minutes = Math.floor(d / 60),
-        seconds = d - (minutes * 60);
-    var output = seconds + 's';
-    if (minutes) {
-        output = minutes + 'm ' + output;
-    }
-
-    return output;
-};
-
 var x = d3.scale.linear()
     .range([0, widthBrush])
     .domain([0, 0]);
@@ -200,7 +188,19 @@ var arc = d3.svg.arc()
 var xAxis = d3.svg.axis()
         .scale(x)
         .orient("bottom")
-    .tickFormat(formatMinutes)
+    .tickFormat(
+        function(d) {
+            var time = computeTime(d);
+            var output = "";
+
+            if (time[0] > 0) {
+                output = output + time[0] + "m ";
+            }
+
+            output = output + time[1] + "s";
+
+            return output;
+        })
     .tickValues(d3.range(0, 3600, 300));
 
 var svgBrush = d3.select("#brush").append("svg")
@@ -280,30 +280,21 @@ function loadDropDown(side, tier) {
         dataFiltered.unshift(0);
 
         var options;
+        var dropDown = dropDownLeft;
 
-        if (side == "left") {
-            dropDownLeft.html("");
-
-            dropDownLeft.append("option")
-                .text("<SELECT A MATCH>");
-
-
-            options = dropDownLeft.selectAll("option")
-                        .data(dataFiltered)
-                        .enter()
-                        .append("option");
+        if (side == "right") {
+            dropDown = dropDownRight
         }
-        else {
-            dropDownRight.html("");
 
-            dropDownRight.append("option")
-                .text("<SELECT A MATCH>");
+        dropDown.html("");
 
-            options = dropDownRight.selectAll("option")
-                        .data(dataFiltered)
-                        .enter()
-                        .append("option");
-        }
+        dropDown.append("option")
+            .text("<SELECT A MATCH>");
+
+        options = dropDown.selectAll("option")
+                    .data(dataFiltered)
+                    .enter()
+                    .append("option");
 
         options.text(function (d) { return "Match id: " + d.match + ", tier: " + d.Tier; })
            .attr("value", function (d) { return d.match; });
@@ -451,14 +442,6 @@ function defineClusters(arr) {
  */
 function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
     var matchTime = 0;
-    var winTeamPlayers = [];
-    var loseTeamPlayers = [];
-
-    var xPosWin = 0;
-    var yPosWin = 0;
-
-    var xPosLose = 0;
-    var yPosLose = 0;
 
     var posListWinX = [];
     var posListWinY = [];
@@ -588,17 +571,23 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
 
         var interTeamThreshold = 30;
 
-        var h1 = d3.select("#info" + side);
+        var headers = d3.select("#info" + side);
 
-        var teamfightHeader = h1.append("h1");
+        var teamfightHeader = headers.append("h1");
 
-        h1.append("h4")
+        headers.append("h4")
             .attr("class", "infoHeader")
             .text("Match id: " + matchId);
 
-        h1.append("h4")
+        headers.append("h4")
             .attr("class", "infoHeader")
             .text("Winner: " + winner);
+
+        var matchTimeArray = computeTime(matchTime);
+
+        headers.append("h4")
+            .attr("class", "infoHeader")
+            .text("End time: " + matchTimeArray[0] + ":" + matchTimeArray[1]);
 
 
         var index = 0;
@@ -612,6 +601,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                     return g;
                 }
             });
+
             //cLength > 30 is actually checking whether teamfights take longer than 3 seconds. This is multiplied times 10 to compensate for the fact that there are 10 players.
             if (mean <= interTeamThreshold && cluster.cLength > 30) {
                 index++;
@@ -627,17 +617,8 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                 // 10 players, so divide by 10
                 cluster.cLength = cluster.cLength / 10;
 
-                var minMin = Math.floor(minmax[0] / 60);
-                var minSec = minmax[0] % 60;
-                if (minSec < 10) {
-                    minSec = "" + 0 + minSec;
-                }
-
-                var maxMin = Math.floor(minmax[1] / 60);
-                var maxSec = minmax[1] % 60;
-                if (maxSec < 10) {
-                    maxSec = "" + 0 + maxSec;
-                }
+                var start = computeTime(minmax[0]);
+                var end = computeTime(minmax[1]);
 
                 if (side == "left") {
                     maxleft = matchTime;
@@ -656,8 +637,8 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                         function() {
                             return "<label><input id='checkbox-" + side + index + "' type='checkbox' name='checkbox-" + side + "' value='" + side + "-" + index + "' checked autocomplete='off' onchange='toggleEllipse(this)'/>" +
                             " Team Fight " + index + 
-                            " (" + minMin + ":" + minSec + " - " 
-                                + maxMin + ":" + maxSec + ")"
+                            " (" + start[0] + ":" + start[1] + " - " 
+                                + end[0] + ":" + end[1] + ")"
                             +"</label>";
                         }
                     )
@@ -897,7 +878,24 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
 /**
  * Utility Functions
  */
- function brushstart() {
+
+/**
+ * Computes the start and end times based on the extends, 
+ * returns the minutes and seconds of both start and end times.
+ */
+function computeTime(time) {
+    var result = [];
+
+    result[0] = Math.floor(time / 60);
+    result[1] = time % 60;
+    if (result[1] < 10) {
+        result[1] = "" + 0 + result[1];
+    }
+
+    return result;
+}
+
+function brushstart() {
     svgBrush.classed("selecting", true);
 }
 
