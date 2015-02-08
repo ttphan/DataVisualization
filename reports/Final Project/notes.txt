@@ -1,0 +1,11 @@
+[] References
+[] Proof read
+[] More relations to literature/slides?
+[x] In timeline: vertical white bar to denote end of shortest match
+[x] Change URL of app to /dota2 as soon as this is changed
+
+[] Add tooltips to timeline/brush
+
+[] Gamemania, 
+[x]Nedgame gebeld  
+[x]MediaMarkt gemaild
