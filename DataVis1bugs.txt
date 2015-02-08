@@ -1,8 +1,0 @@
-Wel smallDDArray, geen interTeamDistArr:
-613258812
-645077087
-645153730
-
-OORZAAK: BEIDE TEAMS 'VERLIEZEN' (won = 0 voor alle spelers)
-
-644374912
