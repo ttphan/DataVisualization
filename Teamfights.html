@@ -5,8 +5,8 @@
     <meta charset="utf-8">
     <link href=bootstrap-3.1.1-dist/css/bootstrap.css rel=stylesheet media="screen">
     <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.0.min.js"></script> 
-    <script type="text/javascript" src="src/javascripts/jquery.tipsy.js"></script>
-    <link href="src/stylesheets/tipsy.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript" src="tipsy/javascripts/jquery.tipsy.js"></script>
+    <link href="tipsy/stylesheets/tipsy.css" rel="stylesheet" type="text/css" />
 </head>
 
 <style>
@@ -132,18 +132,21 @@
 <div id="brush"></div>
 
 <script src=D3/d3.js></script>
-<script src=lib/colorbrewer.js></script>
+<script src=colorbrewer/colorbrewer.js></script>
 
 <script>
 
+//Margins, width and height of svg area.
 var margin = {top: 10, right: 10, bottom: 10, left: 10},
         width = 768,
         height = 768;
 
+//Svg object itself
 var svg = d3.select("#svgArea").append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom);
 
+//The colorset used for coloring the ellipses, texts and timeline.
 var colors = colorbrewer.Set1[9]
             .concat(colorbrewer.Set2[8])
             .concat(colorbrewer.Set3[12]);
@@ -155,7 +158,7 @@ colors.splice(8,1);
 
 // Make a matrix with labels of (x,y)-coordinates
 var labels = create2DArray(124);
-d3.csv("data/Dota-Labels.csv", function(error, data) { 
+d3.csv("scripts/deliverables/Dota-Labels.csv", function(error, data) { 
     var zoneLabels = create2DArray(124);
     data.forEach(function(d) {
         d.x = +d.x;
@@ -165,6 +168,7 @@ d3.csv("data/Dota-Labels.csv", function(error, data) {
     });
     labels = zoneLabels;
 });
+
 
 // Brush section
 var maxleft = 0;
@@ -233,7 +237,7 @@ brushg.selectAll("rect")
 brushstart();
 brushmove();
 
-// Image of map is loaded here
+// Image of arena map is loaded here
 svg.append("svg:image")
         .attr("x", margin.left)
         .attr("y", margin.top)
@@ -241,7 +245,8 @@ svg.append("svg:image")
         .attr("height", height)
         .attr("xlink:href","HighResMap.jpg")
 
-// Left menu
+
+// Left dropdown menu
 var dropDownLeft = d3.select("#dropDownLeft").append("select")
                     .attr("name", "matchlist-left");
 
@@ -249,7 +254,7 @@ dropDownLeft.on("change", menuChanged);
 
 loadDropDown("left", "All");
 
-// Right menu 
+// Right dropdown menu 
 var dropDownRight = d3.select("#dropDownRight").append("select")
                     .attr("name", "matchlist-right");
 
@@ -268,6 +273,7 @@ function loadDropDown(side, tier) {
             d.Tier = d.Tier;
         });
 
+        //Filters the data by tier if specific tiers are selected
         var dataFiltered = data.filter(
             function (d) {
                 if (tier == "All") {
@@ -279,6 +285,7 @@ function loadDropDown(side, tier) {
 
         dataFiltered.unshift(0);
 
+        //Decide whether we're dealing with the left or right dropdown menu
         var options;
         var dropDown = dropDownLeft;
 
@@ -288,6 +295,7 @@ function loadDropDown(side, tier) {
 
         dropDown.html("");
 
+        //Add all options to the dropdown menus
         dropDown.append("option")
             .text("<SELECT A MATCH>");
 
@@ -307,7 +315,7 @@ function getMatch(matchId, side) {
     computeSmallDD(matchId, side);
 }
 
-// Removes the ellipses and team fight info.
+// Resets the visualization of one of the matches, depending on the side variable.
 function reset(side) {
     var ellipses = svg.selectAll("ellipse");
     var rects = svgBrush.selectAll(".rects").selectAll("rect");
@@ -340,8 +348,8 @@ function reset(side) {
 }
 
 
-//This function computes the points in time at which the players of both teams are close to their team members 
-//(small intra-team distance). This function also initiates the retrieval of other data.
+//This function computes the points in time at which the players of both teams are close to their own team members 
+//(small within-team distance, denoted as DD in the data files). This function also initiates the retrieval of other data.
 function computeSmallDD(matchId, side) {
     var winArray = [];
     var loseArray = [];
@@ -351,9 +359,10 @@ function computeSmallDD(matchId, side) {
 
     var smallDDArray = [];
 
-    var earlyGame = 100;
+    //This var removes the first few seconds of the game from the data, since teams are automatically very close to each other during these first seconds while no teamfights will take place.
+    var earlyGame = 50;
 
-    // Smallest (100 * n)% of the win/loseArray
+    // Smallest (100 * threshold)% of the win/loseArray. The higher this number, the more teamfights will be registered, but the more inaccurate this will become.
     var threshold = 0.3;
 
     d3.csv("scripts/deliverables/match-" + matchId + "-distance.csv", function(error, data) {
@@ -365,6 +374,7 @@ function computeSmallDD(matchId, side) {
             d.Tier  = d.Tier;
             d.WinLose = d.WinLose;
 
+            //Get all times at which teams are close together to each respective array.
             if (d.tsync > earlyGame) {
                 if (d.WinLose == "Win") {
                     winArray.push([d.tsync, d.DD]);
@@ -385,12 +395,12 @@ function computeSmallDD(matchId, side) {
             loseSmallDDArray.push(loseArray[i][0]);
         }
 
-        //Intersect both arrays to find moments at which players of both teams are close to their team members.
+        //Intersect both arrays to find moments at which both teams are close to their team members and sort.
         smallDDIntersect(winSmallDDArray, loseSmallDDArray);
 
         smallDDArray.sort(function(a,b) { return a-b; });
 
-        //Remove some noise (single time points that appear in smallDDArray that can not possibly be team fights).
+        //Remove some noise (single second time points that appear in smallDDArray that can not possibly be team fights).
         smallDDArray = filterDD(smallDDArray);
 
         var clusterArray = defineClusters(smallDDArray);
@@ -497,9 +507,9 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                         cLength: 0,
                         totalZoneList: [],
                         mostZone: "",
-                        mostZoneLength: 0, //*****
+                        mostZoneLength: 0, 
                         secondZone: "",
-                        secondZoneLength: 0, //*****
+                        secondZoneLength: 0, 
                         time: []
                     };
                 }
@@ -507,7 +517,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                 var cluster = clusters[clusterIndex];
 
 
-                //Fix labels index out-of-bounds problems
+                //Fix index out-of-bounds problems with labels (sometimes a player walks on an (x,y)-coordinate that is not defined in the zone labels file)
                 if (d.x > 123) {
                     d.x = 123;
                 } else if (d.x < 0) {
@@ -517,12 +527,14 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                 //Get area label for each coordinate
                 labeld = labels[d.x][d.y];
 
+                //Count the amount of times a teamfight was fought in each area for each teamfight.
                 if (!(labeld in cluster.totalZoneList)) {
                     cluster.totalZoneList[labeld] = 1;    
                 }else{
                     cluster.totalZoneList[labeld]++;
                 }
 
+                //Adjust the highest and lowest x,y properties if necessary.
                 if (cluster.xHigh < d.x) {
                     cluster.xHigh = d.x;
                 }
@@ -536,13 +548,15 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                     cluster.yLow = d.y;
                 }
 
+                //Sum x and y positions and count length of teamfight
                 cluster.xSum += d.x;
                 cluster.ySum += d.y;
                 cluster.cLength++;
 
+                //Time of the teamfight
                 cluster.time.push(d.tsync);
 
-
+                //Add x and y positions to respective array based on winning or losing team at time index
                 if (d.won==1) {
                     if (posListWinX[d.tsync] == null) {
                         posListWinX[d.tsync] = 0;
@@ -568,20 +582,19 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
             }
 
         });
-        
+            
+        // Calculate average x and y positions per team
         var avgPosListWinX = avgArray(posListWinX);
         var avgPosListWinY = avgArray(posListWinY);
  
         var avgPosListLoseX = avgArray(posListLoseX);
         var avgPosListLoseY = avgArray(posListLoseY);
 
-        // Array containing distances between team fights by tsync.
+        // Calculate total average position of teamfight.
         var interTeamDistArr = euclArray(avgPosListWinX, avgPosListWinY, avgPosListLoseX, avgPosListLoseY);
 
-        var interTeamThreshold = 30;
-
+        //Add info about match number, winner and the time at which a match ended
         var headers = d3.select("#info" + side);
-
         var teamfightHeader = headers.append("h1");
 
         headers.append("h4")
@@ -598,7 +611,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
             .attr("class", "infoHeader")
             .text("End time: " + matchTimeArray[0] + ":" + matchTimeArray[1]);
 
-
+        //Give each cluster a number (index) and filter them based on the distance between teams.
         var index = 0;
         var newClusters = [];
 
@@ -616,21 +629,22 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                 index++;
                 cluster.cIndex = index;
 
+                //Calculate the average x and y positions of a teamfight.
                 cluster.xAvg = cluster.xSum / cluster.cLength;
                 cluster.yAvg = cluster.ySum / cluster.cLength;
 
+                //Zone where the largest part of the teamfight was fought.
                 cluster.mostZone = objKeyOfMaxValue(cluster.totalZoneList);
-                cluster.mostZoneLength = objMaxValue(cluster.totalZoneList);//*****
+                cluster.mostZoneLength = objMaxValue(cluster.totalZoneList);
 
+                //Zone where the second to largest part of the teamfight was fought.
                 cluster.secondZone = getKeySecondToMax(cluster.totalZoneList,secondToMaxValue(cluster.totalZoneList));
-                cluster.secondZoneLength = secondToMaxValue(cluster.totalZoneList);//*****
+                cluster.secondZoneLength = secondToMaxValue(cluster.totalZoneList);
 
-                // 10 players, so divide by 10
+                // 10 players, so divide length by 10 to normalize
                 cluster.cLength = cluster.cLength / 10;
 
-                var start = computeTime(minmax[0]);
-                var end = computeTime(minmax[1]);
-
+                //Decide which match took longest and adjust the timeline (brush) accordingly
                 if (side == "left") {
                     maxleft = matchTime;
                 }
@@ -640,7 +654,10 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
 
                 var info = d3.select("#info" + side);
                 
-                // Checkboxes
+                var start = computeTime(minmax[0]);
+                var end = computeTime(minmax[1]);
+
+                // Checkboxes for ellipses
                 info.append("p")
                     .attr("class", "infoChildren")
                     .attr("id", function() { return "text-" + side + index})
@@ -665,7 +682,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                     .on("mouseover", enlargeEllipseData)
                     .on("mouseleave", shrinkEllipseData)
                     
-                // Tooltips on text
+                // Tooltips when hovering over text
                 $('.infoChildren').tipsy({
                     gravity: 
                         function() {
@@ -689,6 +706,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                         var mostZoneLength = dat.mostZoneLength
                         var secondZone = dat.secondZone;
 
+                        //If more than 60 percent of a teamfight was fought in one area, show only one area. Otherwise, show two areas in tooltip.
                         if(mostZoneLength / cLength > 0.6) {
                             secondZone = 0;
                         }
@@ -714,65 +732,24 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                     }
                 });
                 
-                
-                var rects = svgBrush.selectAll(".rects").selectAll("rect"); //*****
-
-                $(rects).tipsy({
-                    gravity: 's',
-                    fade: true,
-                    html: true,
-                    offset: 5,
-                    title: 
-                    function(d) { 
-                        var dat = cluster;
-                        var tfNumber = dat.cIndex;
-
-                        var cLength = dat.cLength * 10;
-                        var mostZone = dat.mostZone;
-                        var mostZoneLength = dat.mostZoneLength
-                        var secondZone = dat.secondZone;
-
-                        if(mostZoneLength / cLength > 0.6) {
-                            secondZone = 0;
-                        }
-
-                        var tfMinutes = Math.floor(dat.cLength / 60);
-                        var tfSeconds = Math.floor(dat.cLength % 60);
-                        var matchNumber;
-                        if(side == "left") {
-                            matchNumber = 1;
-                        }
-                        else {
-                            matchNumber = 2;
-                        }
-                        
-                        if(secondZone!=0) {
-                            return "Team fight " + tfNumber + " (match "+ matchNumber +")" + " was mainly fought in the following areas: " + "<h4>" + mostZone + "</h4>" + " and " + "<h4>" + secondZone + "</h4>" + 
-                            "This team fight took " + tfMinutes + " minutes and " + tfSeconds + " seconds."
-                        }
-                        else {
-                            return "Team fight " + tfNumber + " (match "+ matchNumber +")" + " was mainly fought in the following area: " + "<h4>" + mostZone + "</h4>" + 
-                            "This team fight took " + tfMinutes + " minutes and " + tfSeconds + " seconds."
-                        }
-                    }
-                });
-                
-
+                //Add the cluster to the filtered cluster list.
                 newClusters.push(cluster);
             }
         });
 
-
         clusters = newClusters;
 
-        // Reset and redraw the brush and rectangles
+        // Reset and redraw the brush, timeline and rectangles on the timeline
         resetBrush(side);
 
+        //Show how many teamfights happened in each match
         teamfightHeader.attr("class", "infoHeader")
             .text(Object.keys(clusters).length + " Team Fights");
 
         ellipseIndex = 0;
 
+        //Each ellipse's size is based on the average x and y positions and the highest and lowest x and y coordinates of a teamfight. 
+        //Teamfights that were spread over a larger area will lead to larger ellipses.
         svg.append("g")
             .selectAll("ellipse")
             .data(clusters)
@@ -814,7 +791,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
 
                     return 0;
                 }
-            )
+            )//Hovering over ellipses will make other ellipses gray for more contrast and enlarge the corresponding text in the menu on the right.
             .style("stroke-opacity", 0.75)
             .style("stroke-width", "5")
             .style("stroke",
@@ -825,7 +802,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
 
                     return "none";
                 }
-            )
+            )//Hovering over ellipses will make other ellipses gray for more contrast and enlarge the corresponding text in the menu on the right.
             .style("fill", 
                 function(c) {
                     return colors[c.cIndex - 1];
@@ -834,7 +811,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
             .on("mouseover", enlargeEllipseData)
             .on("mouseleave", shrinkEllipseData);
 
-        // Tooltips on ellipses
+        // Show tooltips when hovering over ellipses
         $('svg ellipse').tipsy({
             gravity: 'w',
             fade: true,
@@ -850,6 +827,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                     var mostZoneLength = dat.mostZoneLength
                     var secondZone = dat.secondZone;
 
+                    //If more than 60 percent of a teamfight was fought in one area, show only one area. Otherwise, show two areas in tooltip.
                     if(mostZoneLength / cLength > 0.6) {
                         secondZone = 0;
                     }
@@ -874,7 +852,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                     }
                 }
         });
-
+        
         function resetBrush() {
             // Resize the brush scale
             var max = d3.max([maxleft, maxright]);
@@ -934,7 +912,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                     }
                 );
 
-            // Draws the end line
+            // Draws the white line that indicates the end of the shortest match.
             if (d3.min([maxleft, maxright]) > 0) {
                 svgBrush.append("g").classed("endline", true).selectAll("line")
                     .data([d3.min([maxleft, maxright])])
@@ -994,10 +972,16 @@ function computeTime(time) {
     return result;
 }
 
+/**
+ * Gives the css class 'selecting' to the brush at startup of application
+ */
 function brushstart() {
     svgBrush.classed("selecting", true);
 }
 
+/**
+ * Handles the sliding of the brush and associated showing/hiding of ellipses
+ */
 function brushmove() {
     var s = brush.extent();
     var rects = svgBrush.selectAll(".rects").selectAll("rect");
@@ -1027,13 +1011,15 @@ function brushend() {
     svgBrush.classed("selecting", !d3.event.target.empty());
 }
 
- function toggleTier(element) {
+//Handles the toggling of the tier radio buttons
+function toggleTier(element) {
     var tier = (element.value).split("-")[0];
     var side = (element.value).split("-")[1];
 
     loadDropDown(side, tier);
 }
 
+//Handles showing/hiding of ellipses when checkboxes are checked/unchecked respectively
 function toggleEllipse(element) {
     var side = (element.value).split("-")[0];
     var index = (element.value).split("-")[1];
@@ -1051,6 +1037,7 @@ function toggleEllipse(element) {
         .attr("display", display);
 }
 
+//Handles hovering over an ellipse, during which corresponding text in menu gets enlarged and all other ellipses are turned gray.
 var enlargeEllipseData = function() {
     var ellipseIndex = (this.id).split('-')[1];
     var text = d3.select("#text-" + ellipseIndex);
@@ -1094,6 +1081,7 @@ var enlargeEllipseData = function() {
     text.classed('hover', true);
 }
 
+//Handles setting back the correct colors of all ellipses after not hovering over an ellipse anymore. Also shrinks back the corresponding text in the menu again.
 var shrinkEllipseData = function() {
     var ellipse = d3.select(this);
     var ellipseIndex = (this.id).split('-')[1];
@@ -1120,6 +1108,9 @@ var shrinkEllipseData = function() {
 
 }
 
+/**
+ * Object functions, calculating either values or corresponding keys, e.g. calculating max value of all properties of an object.
+ */
 function getKeySecondToMax(obj, value) { 
     for (o in obj) {
         if(obj.hasOwnProperty(o)) {
@@ -1144,7 +1135,7 @@ function secondToMaxValue(obj) {
     return secondMax;
 }
 
-function objTotalValue(obj) { //*****
+function objTotalValue(obj) { 
     var total = 0;
     for(o in obj) {
         total += obj[o];
@@ -1174,6 +1165,10 @@ function objMaxValue(obj) {
     return max;
 }
 
+
+/**
+ * Array functions
+ */
 function create2DArray(rows) {
   var arr = [];
 
@@ -1222,6 +1217,10 @@ function euclArray(arr1, arr2, arr3, arr4) {
     return euclArr;
 }
 
+
+/**
+ * Handles changing of matches in dropdown menus
+ */
 function menuChanged() {
     var selectedValue = d3.event.target.value;
     var side = (this.name).split("-")[1];
@@ -1233,7 +1232,9 @@ function menuChanged() {
     }
 }
 
-
+/**
+ * Removes 'noise' from smallDDArray
+ */
 function filterDD(arr) {
     var newArr = [];
     var length = 0;
