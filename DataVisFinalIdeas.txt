@@ -1,4 +1,4 @@
-[]!!!Color scheme!!!
+[x]Color scheme
 
 Visualization ideas
 [] Amount of time spent near own towers?
@@ -27,5 +27,4 @@ Highlights
 	things that could be shown in tooltip: 
 		[x] area where teamfight took place
 		[x] dynamic area tooltips
-		[] tooltips near bars in brush
-
+extr. high prio           [] tooltips near bars in brush
