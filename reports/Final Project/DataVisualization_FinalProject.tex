@@ -78,7 +78,8 @@ Since teamfights are usually fought in areas that are not easily visualized by g
 
 \subsection{Data Rendering}
 \label{subsec:datarendering}
-Now that we mapped the data to the ellipses, rendering was an easy step, as we used the D3 library to draw the ellipses easily using the computed variables and properties of the teamfights. The colors of the ellipses are determined using a combination of three qualitative contrasting color scales. These color scales are extracted from the ColorBrewer application. %REFERENCE 
+Now that we mapped the data to the ellipses, rendering was an easy step, as we used the D3 library \ref{ref:d3}
+ to draw the ellipses easily using the computed variables and properties of the teamfights. The colors of the ellipses are determined using a combination of three qualitative contrasting color scales. These color scales are extracted from the ColorBrewer application \ref{ref:colorbrewer}.
 These scales were used to make sure that all ellipses contrasted as much as possible so that the visualization is not unclear and does not contain ambiguities. 
 The ellipses are also drawn with slight transparency, this is done to make sure that no invisible overlaps (i.e. one ellipse falls completely behind another) happen when two teamfights occur in the same area.
 \newline\newline
@@ -108,7 +109,7 @@ As can be seen in Figure \ref{fig:oldapp}, the application was merely able to sh
 \newline\newline
 Our first goal for enhancing this part of the application was to add the ability to compare two matches with each other, while still maintaining a clear visualization of the teamfights of both matches.\newline
 After having created the menu to add two teamfights - which will be elaborated in section \ref{subsec:menu} - we needed to think about how to avoid causing confusion when visualizing the teamfights of two matches together. We wanted to use the same elliptic shapes to visualize teamfights of a second match (for the reasons described in section \ref{subsec:datamapping}), but differences had to be made to clearly visualize which ellipse belongs to which match. The first solution we applied to do so was to use different colors and textures for the ellipses of the second match compared to those of the first match. The ellipses of the second match were given colors from the end of the array containing the qualitative contrasting color scale, as to make sure that reoccurring colors are a rare occurrence. Furthermore, the second match ellipses are shown as the perimeters of an ellipse (so only an elliptic line), instead of a filled ellipse. This was chosen as a suitable solution, because the filled ellipses of one match contrast the elliptic lines of another very well. The colors are also set to be contrasting as much as possible, meaning that confusion will probably not occur very quickly. Furthermore, the elliptic lines will not hide (i.e. overlap) other teamfights, because one can see through the unfilled area in the middle.\newline\newline
-Another goal we had, was to give users more information about each of the teamfights. This information was retrieved from the same data as was used to draw the ellipses. To give this information to the user in a clear fashion, we used the Tipsy library %REFERENCE 
+Another goal we had, was to give users more information about each of the teamfights. This information was retrieved from the same data as was used to draw the ellipses. To give this information to the user in a clear fashion, we used the Tipsy library \ref{ref:tipsy}
 to develop tooltips that appear whenever a user hovers over one of the ellipses. These tooltips contain information about the main areas the teamfight was fought in and about its duration. Whenever a user hovers over an ellipse, the other ellipses are turned gray and the text in the menu on the right corresponding to the ellipse is enlarged. This is done to emphasize to the user which teamfight he/she is looking at, so he/she can for example decide to hide this ellipse from the view.\newline\newline
 More emphasis on the connection between ellipses and the menu on the right is made due to the fact that the colors of the ellipses of both matches correspond to the colors used to color the texts in the menu on the right. The colors are also connected to those of the rectangles shown on the timeline, which is discussed in section \ref{subsec:timeline}.
 \newpage
@@ -154,7 +155,15 @@ Some of our more ambitious ideas include adding the option to include the replay
 
 \subsection{Conclusion}
 We are happy with the end result of our work. The application does what we wanted it to do and it does this in a smooth and clear way. We think it also conforms to the principles of Data Visualization as they were taught to us during the course lectures.
-%REFERENCE not really, change URL!
 The end result of our application can be found on \url{http://www.techteach.nl/dota2}
+
+\newcounter{refcounter}
+
+\section{References}
+Bostock, M. (2013). Data-Driven Documents (Version 3.5.4) [Software]. Available from http://d3js.org/ \refstepcounter{refcounter}\label{ref:d3}
+\newline
+Brewer, C., \& Harrower, M. ColorBrewer (Version 2.0) [Software]. Available from http://www.colorbrewer2.org/ \refstepcounter{refcounter}\label{ref:colorbrewer}
+\newline
+Frame, J. (2012). tipsy (Version 1.0.0a) [Software]. Available from http://onehackoranother.com/projects/jquery/tipsy/ \refstepcounter{refcounter}\label{ref:tipsy}
 
 \end{document}
