@@ -711,8 +711,16 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                             secondZone = 0;
                         }
 
-                        var tfMinutes = Math.floor(dat.cLength / 60);
-                        var tfSeconds = Math.floor(dat.cLength % 60);
+                        var minmax = d3.extent(dat.time);
+
+                        var duration = minmax[1]-minmax[0];
+
+                        var time = computeTime(duration);
+
+                        if(time[1].length==2 && time[1][0] == "0") {
+                            time[1] = time[1][1];
+                        }
+
                         var matchNumber;
                         if(side == "left") {
                             matchNumber = 1;
@@ -723,11 +731,11 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
 
                         if(secondZone!=0) {
                         return "Team fight " + tfNumber + " (match "+ matchNumber +")" + " was mainly fought in the following areas: " + "<h4>" + mostZone + "</h4>" + " and " + "<h4>" + secondZone + "</h4>" + 
-                        "This team fight took " + tfMinutes + " minutes and " + tfSeconds + " seconds."
+                        "This team fight took " + time[0] + " minutes and " + time[1] + " seconds." //*****
                         }
                         else {
                             return "Team fight " + tfNumber + " (match "+ matchNumber +")" + " was mainly fought in the following area: " + "<h4>" + mostZone + "</h4>" + 
-                            "This team fight took " + tfMinutes + " minutes and " + tfSeconds + " seconds."
+                            "This team fight took " + time[0] + " minutes and " + time[1] + " seconds." //*****
                         }
                     }
                 });
@@ -832,8 +840,18 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                         secondZone = 0;
                     }
 
-                    var tfMinutes = Math.floor(dat.cLength / 60);
-                    var tfSeconds = Math.floor(dat.cLength % 60);
+                    //var tfMinutes = Math.floor(dat.cLength / 60); //*****
+                    //var tfSeconds = Math.floor(dat.cLength % 60); //*****
+                    var minmax = d3.extent(dat.time);
+
+                    var duration = minmax[1]-minmax[0];
+
+                    var time = computeTime(duration);
+
+                    if(time[1].length==2 && time[1][0] == "0") {
+                        time[1] = time[1][1];
+                    }                    
+
                     var matchNumber;
                     if(side == "left") {
                         matchNumber = 1;
@@ -844,11 +862,11 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                     
                     if(secondZone!=0) {
                         return "Team fight " + tfNumber + " (match "+ matchNumber +")" + " was mainly fought in the following areas: " + "<h4>" + mostZone + "</h4>" + " and " + "<h4>" + secondZone + "</h4>" + 
-                        "This team fight took " + tfMinutes + " minutes and " + tfSeconds + " seconds."
+                        "This team fight took " + time[0] + " minutes and " + time[1] + " seconds." //*****
                     }
                     else {
                         return "Team fight " + tfNumber + " (match "+ matchNumber +")" + " was mainly fought in the following area: " + "<h4>" + mostZone + "</h4>" + 
-                        "This team fight took " + tfMinutes + " minutes and " + tfSeconds + " seconds."
+                        "This team fight took " + time[0] + " minutes and " + time[1] + " seconds." //*****
                     }
                 }
         });
