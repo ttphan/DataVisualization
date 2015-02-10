@@ -43,7 +43,7 @@ Preliminary work for this application was done during the first assignment for t
 \newline\newline
 Our goals for this project were to improve the ways in which information was visualized and provided to the users of the application. We wanted to improve the application so that it would visualize the match data in such a way that both skilled and unskilled players are able to retrieve the information they seek to find. We also found it important to improve the amount of information that was provided with the given visualization and we wanted to create more extensive visualization and options for users, instead of just having the map of the DotA2 arena.
 \newline\newline
-The outline of the report is as follows. Firstly, in the section ``Data Processing'' \ref{sec:dataproc}, we will give a definition of how we interpreted teamfights. This will be done to avoid ambiguities in understanding our application and the rest of the report. Furthermore, we will describe what the application looked like and what it could do prior to the work that was done as part of the final assignment. After that, in the section ``Manners of Visualization'' \ref{sec:mov}, the additions and improvements that were made to the application will be expanded upon. Finally, a short conclusion will be given, in which we will discuss whether all goals were reached and what future work is planned to further improve the application.
+The outline of the report is as follows. Firstly, in section \ref{sec:dataproc} (``Data Processing'' ), we will give a definition of how we interpreted teamfights. This will be done to avoid ambiguities in understanding our application and the rest of the report. Furthermore, we will describe what the application looked like and what it could do prior to the work that was done as part of the final assignment. After that, in  section \ref{sec:mov} (``Manners of Visualization'' ), the additions and improvements that were made to the application will be expanded upon. Finally, a short conclusion will be given in section \ref{sec:endresult}, in which we will discuss whether all goals were reached and what future work is planned to further improve the application.
 
 \section{Data Processing}
 \label{sec:dataproc}
@@ -52,8 +52,9 @@ The data visualization pipeline was followed during the preliminary work that wa
 
 \subsection{Our Definition of Teamfight}
 %Definition of teamfight for this application, just to make it clear to the reader and to avoid ambiguities.
-To make sure that it is clear how we defined `teamfight' while designing and developing our application, we will define this in the upcoming paragraph.
-We define a teamfight as a period of time in which all players of both teams (Team Radiant and Team Dire) are close to their teammates and their enemies. Simply stated, this means that all ten players are near each other, which means that they are probably fighting. This makes the period of time during which this happens a teamfight.
+To make sure that it is clear how we defined `teamfight' while designing and developing our application, we will define this in the upcoming paragraph. Teamfights are critical to the game, because a teamfight with all members involved are events with very high stakes. When one team has more team members alive than the other team as a result of that team fight, they can use this to their advantage by completing objectives or even finishing the game, while the dead members of the team who have lost the teamfight will have to either buy themselves in with their hard earned gold or wait for the respawn timer. Completing objectives will yield gold and territorial advantages to the winning team, which will cause a snowball effect throughout the game. In other words, teamfights involving all members of both teams determine the flow of the game.
+\newline\newline
+We define a teamfight as a period of time in which all players of both teams (Team Radiant and Team Dire) are close to their teammates and their enemies. Simply stated, this means that all ten players are near each other, which means that the chances of them fighting each other is very likely. This makes the period of time during which this happens a teamfight. We limit the teamfights to balanced teamfights of full capacity, balanced because it is a fight of even numbers and full capacity because all 10 players are involved. The moment one member is either killed or has retreated, the advantage is to the other team and we will not consider it a balanced teamfight of full capacity anymore. That also means that small skirmishes of less than 10 people are not considered teamfights, even if they are evenly balanced. This is to ensure that we only capture the teamfights where both teams go `all in'.
 
 \subsection{Data Filtering}
 %Describe the steps taken to extract teamfights
@@ -64,7 +65,7 @@ From the -zones files, we used the following variables: the x and y positions, t
 For each match, we calculated for each tsync (= second) whether the DD variable was lower than a certain threshold. If it was, that time moment was added to an array along with its corresponding DD. We did this for both teams, resulting in two arrays containing low DD time moments for the winning team and the losing team, which we called winSmallDDArray and loseSmallDDArray, respectively. By intersecting these arrays, the smallDDArray was created, in which moments in time are contained where the DD is low for both teams at the same time. Such a moment means that players from both teams are close to their teammates. The only thing that remains to have a teamfight, is that both teams have to be close to each other at such a moment.
 \newline\newline
 To calculate whether this is the fact, we also calculated for each entry of smallDDArray the x and y positions of each of the ten players, so we also knew where a teamfight took place on top of when it took place. These positions were put into corresponding arrays too, which were again split up into a `winning team' and `losing team' version. Out of these positions, we were able to calculate the average positions of each team (i.e. the positions of all five players of a team, summed up and then averaged), with which we were now able to compute the Euclidean distance between these two averages. If this distance is lower than a certain threshold (we set this to 30, as we calculated this was a reasonable distance), a teamfight is found.
-\newpage
+\newline\newline
 With the above described procedure, we were able to find teamfights very accurately. We checked whether our estimations were right by downloading some of the replay videos corresponding to the match numbers and checking whether a teamfight actually took place during the timespans that we estimated and it turned out we were able to find teamfights really accurately. This meant that we could now start on mapping the data to renderable data.
 
 \subsection{Data Mapping}
@@ -128,7 +129,7 @@ The timeline can be found below the map. On the timeline small rectangles are pl
 The addition of the brush to the timeline gives users the ability to `slide' through a game and filter specific moments of the game. This gives the users new visualization options, such as for example being able to see all teamfights that happened after the first fifteen minutes of a match have passed. 
 
 \section{End Result}
-\label{subsec:endresult}
+\label{sec:endresult}
 %Show end result, maybe talk a bit about it?
 An overview of what the application now looks like can be seen in Figure \ref{fig:endresult}. Below, we will review our goals, discuss in what ways we want to work further on our application to improve it in the future and give a short conclusion.
 
