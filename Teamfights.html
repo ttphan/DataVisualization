@@ -673,7 +673,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                     .attr("id", function() { return "text-" + side + index})
                     .html(
                         function() {
-                            return "<label><input id='checkbox-" + side + index + "' type='checkbox' name='checkbox-" + side + "' value='" + side + "-" + index + "' checked autocomplete='off' onchange='toggleEllipse(this)'/>" +
+                            return "<label><input id='checkbox-" + side + index + "' type='checkbox' name='checkbox-" + side + "' value='" + side + "-" + index + "' checked autocomplete='off' onchange='toggleData(this)'/>" +
                             " Team Fight " + index + 
                             " (" + start[0] + ":" + start[1] + " - " 
                                 + end[0] + ":" + end[1] + ")"
@@ -689,8 +689,8 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                             return colors[colors.length - (index)];
                         }
                     )
-                    .on("mouseover", enlargeEllipseData)
-                    .on("mouseleave", shrinkEllipseData)
+                    .on("mouseover", hoverOnData)
+                    .on("mouseleave", hoverOffData)
                     
                 // Tooltips when hovering over text
                 $('.infoChildren').tipsy({
@@ -826,8 +826,8 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                     return colors[c.cIndex - 1];
 
                 })
-            .on("mouseover", enlargeEllipseData)
-            .on("mouseleave", shrinkEllipseData);
+            .on("mouseover", hoverOnData)
+            .on("mouseleave", hoverOffData);
 
         // Show tooltips when hovering over ellipses
         $('svg ellipse').tipsy({
@@ -947,8 +947,8 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                         }
                     }
                 ) 
-                .on("mouseover", enlargeEllipseData)
-                .on("mouseleave", shrinkEllipseData);
+                .on("mouseover", hoverOnData)
+                .on("mouseleave", hoverOffData);
 
             // Draws the white line that indicates the end of the shortest match.
             if (d3.min([maxleft, maxright]) > 0) {
@@ -1090,7 +1090,7 @@ function brushmove() {
                 selected = false;
             }
 
-            toggleEllipse(checkbox[0]);
+            toggleData(checkbox[0]);
             return selected;
         }
     );
@@ -1108,8 +1108,8 @@ function toggleTier(element) {
     loadDropDown(side, tier);
 }
 
-//Handles showing/hiding of ellipses when checkboxes are checked/unchecked respectively
-function toggleEllipse(element) {
+//Handles showing/hiding of ellipses and rects when checkboxes are checked/unchecked respectively
+function toggleData(element) {
     var side = (element.value).split("-")[0];
     var index = (element.value).split("-")[1];
     var display = element.checked ? "inline" : "none";
@@ -1121,13 +1121,22 @@ function toggleEllipse(element) {
             }
 
             return false;
-        }
-        )
+        })
         .attr("display", display);
+
+    svgBrush.selectAll(".rects").selectAll("rect")
+        .filter(function(d) {
+            if (side == d.side) {
+                return d.cIndex == index;
+            }
+
+            return false;
+        })
+        .classed("selected", display == "inline" ? true : false);
 }
 
-//Handles hovering over an ellipse, during which corresponding text in menu gets enlarged and all other ellipses are turned gray.
-var enlargeEllipseData = function() {
+//Handles hovering over an ellipse/rect, during which corresponding text in menu gets enlarged and all other ellipses/rects are turned gray.
+var hoverOnData = function() {
     var ellipseIndex = (this.id).split('-')[1];
     var text = d3.select("#text-" + ellipseIndex);
     var side = ellipseIndex.replace(/[0-9]/g, '');
@@ -1206,8 +1215,8 @@ var enlargeEllipseData = function() {
     text.classed('hover', true);
 }
 
-//Handles setting back the correct colors of all ellipses after not hovering over an ellipse anymore. Also shrinks back the corresponding text in the menu again.
-var shrinkEllipseData = function() {
+//Handles setting back the correct colors of all ellipses/rects after not hovering over an ellipse/rect anymore. Also shrinks back the corresponding text in the menu again.
+var hoverOffData = function() {
     var ellipse = d3.select(this);
     var ellipseIndex = (this.id).split('-')[1];
     var text = d3.select("#text-"+ellipseIndex);
