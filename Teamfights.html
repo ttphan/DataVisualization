@@ -146,6 +146,9 @@ var svg = d3.select("#svgArea").append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom);
 
+//Minimum teamfight length, if teamfights are shorter than this amount / 10, the teamfight will not be visualized.
+var MIN_TF_LENGTH = 40;
+
 //The colorset used for coloring the ellipses, texts and timeline.
 var colors = colorbrewer.Set1[9]
             .concat(colorbrewer.Set2[8])
@@ -625,7 +628,7 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
             });
 
             //cLength > 30 is actually checking whether teamfights take longer than 3 seconds. This is multiplied times 10 to compensate for the fact that there are 10 players.
-            if (mean <= interTeamThreshold && cluster.cLength > 30) {
+            if (mean <= interTeamThreshold && cluster.cLength > MIN_TF_LENGTH) {
                 index++;
                 cluster.cIndex = index;
 
