@@ -177,14 +177,17 @@ d3.csv("scripts/deliverables/Dota-Labels.csv", function(error, data) {
 var maxleft = 0;
 var maxright = 0;
 
+// Margins, width and height of brush area.
 var marginBrush = {top: 10, right: 15, bottom: 30, left: 20},
     widthBrush = 778,
     heightBrush = 75 - marginBrush.top - marginBrush.bottom;
 
+// Scale of brush
 var x = d3.scale.linear()
     .range([0, widthBrush])
     .domain([0, 0]);
 
+// Brush initialization
 var brush = d3.svg.brush()
     .x(x)
     .extent([0, 0])
@@ -192,11 +195,13 @@ var brush = d3.svg.brush()
     .on("brush", brushmove)
     .on("brushend", brushend);
 
+// Brush handle initialization
 var arc = d3.svg.arc()
     .outerRadius(heightBrush / 2)
     .startAngle(0)
     .endAngle(function(d, i) { return i ? -Math.PI : Math.PI; });
 
+// Axis scale initialization
 var xAxis = d3.svg.axis()
         .scale(x)
         .orient("bottom")
@@ -215,12 +220,14 @@ var xAxis = d3.svg.axis()
         })
     .tickValues(d3.range(0, 3600, 300));
 
+// Initialization of the svg area for the brush
 var svgBrush = d3.select("#brush").append("svg")
     .attr("width", widthBrush + marginBrush.left + marginBrush.right)
     .attr("height", heightBrush + marginBrush.top + marginBrush.bottom)
 .append("g")
     .attr("transform", "translate(" + marginBrush.left + "," + marginBrush.top + ")");
 
+// Set brush (selection) size properties
 svgBrush.append("g")
     .attr("class", "x-axis")
     .attr("transform", "translate(0," + heightBrush + ")")
