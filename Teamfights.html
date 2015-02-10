@@ -910,6 +910,11 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
             svgBrush.append("g").classed("rects", true).selectAll("rect")
                 .data(clusters)
             .enter().append("rect")
+                .attr("id", 
+                    function(c) {  
+                        return "rect-" + side + c.cIndex; 
+                    }
+                )
                 .attr("width",
                     function(c) {
                         var extents = d3.extent(c.time);
@@ -932,13 +937,18 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                 )
                 .style("fill",
                     function(c) {
-                        if (side == "left") {
-                            return colors[c.cIndex - 1];
-                        }
-
-                        return "none"
+                        return colors[c.cIndex - 1];
                     }
-                );
+                )
+                .style("fill-opacity", 
+                    function(c) {
+                        if (side == "right") {
+                            return 0;
+                        }
+                    }
+                ) 
+                .on("mouseover", enlargeEllipseData)
+                .on("mouseleave", shrinkEllipseData);
 
             // Draws the white line that indicates the end of the shortest match.
             if (d3.min([maxleft, maxright]) > 0) {
@@ -974,6 +984,57 @@ function computeInterTeamDistArr(matchId, smallDDArray, clusterArray, side) {
                         return "translate(" + x(d3.extent(c.time)[0]) + "," + offset + ")"; 
                     }
                 )
+
+            $('.rects rect').tipsy({
+                gravity: 'w',
+                fade: true,
+                html: true,
+                offset: 5,
+                title: 
+                    function(d) { 
+                        var dat = this.__data__;
+                        var tfNumber = dat.cIndex;
+
+                        var cLength = dat.cLength * 10;
+                        var mostZone = dat.mostZone;
+                        var mostZoneLength = dat.mostZoneLength
+                        var secondZone = dat.secondZone;
+
+                        //If more than 60 percent of a teamfight was fought in one area, show only one area. Otherwise, show two areas in tooltip.
+                        if(mostZoneLength / cLength > 0.6) {
+                            secondZone = 0;
+                        }
+
+                        //var tfMinutes = Math.floor(dat.cLength / 60); //*****
+                        //var tfSeconds = Math.floor(dat.cLength % 60); //*****
+                        var minmax = d3.extent(dat.time);
+
+                        var duration = minmax[1]-minmax[0];
+
+                        var time = computeTime(duration);
+
+                        if(time[1].length==2 && time[1][0] == "0") {
+                            time[1] = time[1][1];
+                        }                    
+
+                        var matchNumber;
+                        if(side == "left") {
+                            matchNumber = 1;
+                        }
+                        else {
+                            matchNumber = 2;
+                        }
+                        
+                        if(secondZone!=0) {
+                            return "Team fight " + tfNumber + " (match "+ matchNumber +")" + " was mainly fought in the following areas: " + "<h4>" + mostZone + "</h4>" + " and " + "<h4>" + secondZone + "</h4>" + 
+                            "This team fight took " + time[0] + " minutes and " + time[1] + " seconds." //*****
+                        }
+                        else {
+                            return "Team fight " + tfNumber + " (match "+ matchNumber +")" + " was mainly fought in the following area: " + "<h4>" + mostZone + "</h4>" + 
+                            "This team fight took " + time[0] + " minutes and " + time[1] + " seconds." //*****
+                        }
+                    }
+            });
 
             brushmove();
         }        
@@ -1073,6 +1134,7 @@ var enlargeEllipseData = function() {
 
     var numberPattern = /\d+/g;
 
+    // Gray out the irrelevent ellipses.
     svg.selectAll("ellipse")
         .transition().duration(250)
         .style("fill",
@@ -1106,6 +1168,41 @@ var enlargeEllipseData = function() {
             }
         )
 
+    // Gray out the irrelevent rectangles in the brush area.
+    svgBrush.selectAll(".rects").selectAll("rect")
+        .transition().duration(250)
+        .style("fill",
+            function(c) {
+                // All other ellipses
+                if (c.cIndex != ellipseIndex.match(numberPattern) || c.side != side) {
+                    return "gray";
+                }
+                // Selected ellipse
+                else {
+                    return colors[c.cIndex - 1];
+                }
+
+            }
+        )
+        .style("stroke",
+            function(c) {
+                if (c.side == "left") {
+                    return "none";
+                }
+                else {
+                    // All other ellipses
+                    if (c.cIndex != ellipseIndex.match(numberPattern) || c.side != side) {
+                        return "gray";
+                    }
+                    // Selected ellipse
+                    else {
+                        return colors[colors.length - c.cIndex];
+                    }
+                }
+            }
+        )
+
+    // Enlarge the relevant text in the info section.
     text.classed('hover', true);
 }
 
@@ -1115,6 +1212,7 @@ var shrinkEllipseData = function() {
     var ellipseIndex = (this.id).split('-')[1];
     var text = d3.select("#text-"+ellipseIndex);
     
+    // Return ellipses back to default.
     svg.selectAll("ellipse")
         .transition().duration(250)
         .style("fill", 
@@ -1132,6 +1230,25 @@ var shrinkEllipseData = function() {
             }
         );
 
+    // Return rectangles in brush area back to default.
+    svgBrush.selectAll(".rects").selectAll("rect")
+        .transition().duration(250)
+        .style("fill", 
+            function(c) { 
+                return colors[c.cIndex - 1]; 
+            }
+        )
+        .style("stroke",
+            function(c) {
+                if (c.side == "left") {
+                    return "none";
+                }
+
+                return colors[colors.length - c.cIndex];
+            }
+        );
+
+    // Return text in info section back to default.
     text.classed('hover', false);  
 
 }
