@@ -33,33 +33,34 @@
 %We can not yet concretely define our deliverables. We want to do research into what kind of improvements can still be made to the existing results that we obtained from the first assignment. A general approach that we want to take is to visualize the data in such a way that both skilled and unskilled players can quickly retrieve information about the most interesting parts of a match. We had been thinking of adjustments such as being able to `slide' through a game and see teamfight locations (and possibly other things, such as objective control) throughout the game. We also want to create a way in which players can view and compare the teamfights of multiple matches at the same time. Lastly, if time allows it, we want to try and see if we can come up with interesting features and visualizations that do not directly involve teamfights. One thing we came up with was the visualization of objective control (killing creeps in the jungle, fighting near towers, etc.).
 %We hope to see some more interesting results while working on this project!
 \newpage
-\section*{Introduction}
+\section*{Introduction and Definition}
 %Talk about how part of the application was already created and that we really wanted to improve the application in terms of visualization and the thereby given information.
 The following report will discuss the application that was created as part of the final assignment of the IN4086 Data Visualization course. In this report we will explain why this application was created and its functionalities in terms of visualization and providing information to the user will be elaborated upon. The application can be found at \url{http://www.techteach.nl/dota2}.
-
+\newline\newline
 The main role of the application is to extract so-called `teamfights' out of data from the Multiplayer Online Battle Arena game called `Defense of the Ancients 2' or DotA2. The goal is to extract and visualize these teamfights and to give users information about these teamfights in many different, but clear ways.
-
+\newline\newline
 Teamfights are critical to the game, because teamfights with all members involved are events with very high stakes. When one team has more team members alive than the other team after having fought a teamfight, this team can use this situation to their advantage by completing objectives or even finishing the game. They can do this while the dead members of the team that lost the teamfight will have to either buy themselves back into the game with their hard earned gold or wait for the respawn timer. Completing objectives will yield gold and territorial advantages to the winning team, which will cause a snowball effect throughout the game. In other words, teamfights involving all members of both teams determine the flow and outcome of the game.
-
+\newline\newline
 We define a teamfight as a period of time in which all players of both teams (Team Radiant and Team Dire) are close to their teammates and their enemies. Simply stated, this means that all ten players are near each other, which means that the chances of them fighting each other is very likely. This makes the period of time during which this happens a teamfight. We limit the teamfights to fully balanced teamfights, which means that the teamfight should involve all ten players. The moment one member is either killed or has retreated, the advantage is to the other team and we will not consider it a fully balanced teamfight anymore. That also means that small skirmishes of less than 10 people are not considered to be teamfights, even if they are evenly balanced. This is to ensure that we only capture the teamfights where both teams go `all in', which are the defining fights of a match.
-
+\newpage
 \section*{Visualization of the data}
 %Describe the steps taken to extract teamfights
-With the definition of teamfight stated in the previous paragraph, the data can now be visualized by using the D3 library [\ref{ref:d3}]. The files are first split by match in order to speed up the loading time and avoid unnecessary load. Invalid matches (matches without winners, unfinished matches) are filtered out. 
-
-Then, the x and y positions of players are collected, along with the distances between team members and between teams. Using this information, we can effectively predict the possibility of a teamfight occurring in a general area, depicted as an ellipse. The colors of the ellipses are determined using a combination of three qualitative contrasting color palettes, extracted from ColorBrewer [\ref{ref:colorbrewer}]. These palettes were used to make sure that all ellipses contrasted as much as possible so that the visualization is not unclear and does not contain ambiguities. Colors of the second match are of the other end of the palette, along with using only the strokes instead of the fill of the ellipse, to further increase the contrast.
+With the definition of teamfight stated in the previous paragraph, the data can now be visualized by using the D3 library [\ref{ref:d3}]. The files are first split by match in order to speed up the loading time and avoid unnecessary computational load. Invalid matches (matches without winners, unfinished matches) are filtered out. 
+\newline\newline
+Then, the x and y positions of players are collected, along with the distances between team members and between teams. Using this information, we can effectively predict the possibility of a teamfight occurring in a general area. These areas are depicted using ellipses. The colors of the ellipses are determined using a combination of three qualitative contrasting color palettes, extracted from ColorBrewer [\ref{ref:colorbrewer}]. These palettes were used to make sure that all ellipses contrasted as much as possible so that the visualization is not unclear and does not contain ambiguities. Colors of ellipses of a second match are retrieved from the back end of the palette. Furthermore, only the perimeters of ellipses are drawn to depict teamfights of the second match, instead of an entire ellipse, to further increase the contrast between the teamfights of the two matches.
 The ellipses are also drawn with slight transparency, this is done to accommodate for (complete) overlaps when two teamfights occur in the same area and to keep the contours of the map visible.
+\newline\newline
+Details of the match are shown on the right of the map, along with the dropdown menu to select matches and radio buttons to filter by skill tier. We introduced the filtering of matches, because the user can be overwhelmed by the amount of matches when more matches are added in the future. Two matches can be shown on the map simultaneously for comparison, this makes it easier to find correlations, for example between tiers and the amount of teamfights, or between tiers and positioning of teamfights. 
+\newline\newline
+Checkboxes next to the teamfight information in the menu can be used to toggle on and off the teamfight ellipses on the map and the rectangles on the timeline. This gives the possibility to enhance visibility when viewing matches with a high amount of teamfights. It also allows for specific types of comparisons and the finding of specific correlations. \newline\newline
+The timeline, below the map, also clearly visualizes when these teamfights occur, their durations and the end time of the shortest match (denoted as a vertical white line) as well as the relative positions and lengths of teamfights.\ The brush that is drawn on the timeline can be used to smoothly scroll through the game and to make other types of specific visualizations, for example looking only at all teamfights that occurred after the first 15 minutes.\newline\newline
+Tooltips are shown when hovering over the text, the ellipses or the timeline rectangles,. These tooltips are implemented using the Tipsy library [\ref{ref:tipsy}]. They show extra information about the teamfight corresponding to the ellipse, rectangle or information text that is hovered over. 
+The information texts on the right side, the ellipses and the rectangles in the timeline are all connected with each other and will be highlighted accordingly when hovered over, helping the user to quickly pinpoint which teamfight they are viewing.
 
-Details of the match are shown on the right of the map, along with the dropdown menu to select matches and radio buttons to filter by tier. We introduced the filtering of matches, because the user can be overwhelmed by the amount of matches when more matches are added in the future. Two matches can be shown on the map simultaneously for comparison, this makes it easier to find correlations, for example between tiers and the amount of teamfights, or tiers and positioning of teamfights. 
-
-Checkboxes next to the teamfights and the timeline below the map can be used to toggle on and off the ellipses, to enhance visibility when viewing matches with a high amount of teamfights. The timeline also clearly visualizes when these teamfights occur, their durations and the end time of the shorted match, and the brush of the timeline can be used to smoothly scroll through the game. Tooltips are shown when hovering over the text, ellipses or the timeline rectangles, showing extra information about the teamfight. These tooltips are implemented using the Tipsy library [\ref{ref:tipsy}].
-
-The information on the right side, ellipses and rectangles in the timeline are all connected with each other and will be highlighted accordingly when hovered, helping the user to quickly pinpoint the right teamfight.
-
-
+\newpage
 \newcounter{refcounter}
 
-\section{References}
+\section*{References}
 Bostock, M. (2013). Data-Driven Documents (Version 3.5.4) [Software]. Available from http://d3js.org/ \refstepcounter{refcounter}\label{ref:d3}
 \newline
 Brewer, C., \& Harrower, M. ColorBrewer (Version 2.0) [Software]. Available from http://www.colorbrewer2.org/ \refstepcounter{refcounter}\label{ref:colorbrewer}
